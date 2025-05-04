@@ -20,7 +20,7 @@ export const userColumns: ColumnDef<User>[] = [
   },
   {
     accessorKey: "isAdmin",
-    header: "Rôle",
+    header: "Role",
     cell: ({ row }) => {
       const isAdmin = row.getValue("isAdmin") as boolean
       return <Badge variant={isAdmin ? "default" : "outline"}>{isAdmin ? "Admin" : "Utilisateur"}</Badge>

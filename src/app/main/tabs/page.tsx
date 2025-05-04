@@ -1,7 +1,8 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Overview from "./overview/page";
-
+import Donors from "./donors/page"
+import Requests from "./req/page";
 const DashboardTabs= () => {
   return (
     
@@ -15,6 +16,8 @@ const DashboardTabs= () => {
             <TabsTrigger value="Stock">Stock</TabsTrigger>
           </TabsList>
           <Overview />
+          <Donors />
+          <Requests/>
         </Tabs>
   );
 }
