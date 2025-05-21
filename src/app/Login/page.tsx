@@ -197,7 +197,7 @@ export default function LoginPage() {
       }
 
       // Redirection après connexion réussie
-      router.push("/");
+      router.push("/overview");
     } catch (error) {
       setIsLoading(false);
       if (error instanceof Error) {

@@ -6,7 +6,7 @@ export const donors: Donor[] = [
       firste_name: "Amine",
       last_name: "Bennani",
       email: "amine.bennani@example.com",
-      Blood: "+A",
+      Blood: "A+",
       regulier: true
     },
     {
@@ -14,7 +14,7 @@ export const donors: Donor[] = [
       firste_name: "Sara",
       last_name: "Belkacem",
       email: "sara.belkacem@example.com",
-      Blood: "+O",
+      Blood: "O-",
       regulier: false
     },
     {
@@ -22,7 +22,7 @@ export const donors: Donor[] = [
       firste_name: "Youssef",
       last_name: "Kadri",
       email: "youssef.kadri@example.com",
-      Blood: "+B",
+      Blood: "B+",
       regulier: true
     },
     {
@@ -30,7 +30,7 @@ export const donors: Donor[] = [
       firste_name: "Lina",
       last_name: "Mekki",
       email: "lina.mekki@example.com",
-      Blood: "+AB",
+      Blood: "AB+",
       regulier: false
     },
     {
@@ -38,7 +38,7 @@ export const donors: Donor[] = [
       firste_name: "Mohamed",
       last_name: "Zerhouni",
       email: "mohamed.zerhouni@example.com",
-      Blood: "+O",
+      Blood: "O+",
       regulier: true
     },
     {
@@ -46,7 +46,7 @@ export const donors: Donor[] = [
       firste_name: "Amine",
       last_name: "Bennani",
       email: "amine.bennani@example.com",
-      Blood: "+A",
+      Blood: "A+",
       regulier: true
     },
     {
@@ -54,7 +54,7 @@ export const donors: Donor[] = [
       firste_name: "Sara",
       last_name: "Belkacem",
       email: "sara.belkacem@example.com",
-      Blood: "+O",
+      Blood: "O+",
       regulier: false
     },
     {
@@ -62,7 +62,7 @@ export const donors: Donor[] = [
       firste_name: "Youssef",
       last_name: "Kadri",
       email: "youssef.kadri@example.com",
-      Blood: "-B",
+      Blood: "B-",
       regulier: true
     },
     {
@@ -70,7 +70,7 @@ export const donors: Donor[] = [
       firste_name: "Lina",
       last_name: "Mekki",
       email: "lina.mekki@example.com",
-      Blood: "+AB",
+      Blood: "AB+",
       regulier: false
     },
     {
@@ -78,7 +78,7 @@ export const donors: Donor[] = [
       firste_name: "Omar",
       last_name: "Fares",
       email: "omar.fares@example.com",
-      Blood: "-O",
+      Blood: "O-",
       regulier: true
     },
     {
@@ -86,7 +86,7 @@ export const donors: Donor[] = [
       firste_name: "Nora",
       last_name: "Brahimi",
       email: "nora.brahimi@example.com",
-      Blood: "-A",
+      Blood: "A-",
       regulier: true
     },
     {
@@ -94,7 +94,7 @@ export const donors: Donor[] = [
       firste_name: "Samir",
       last_name: "Touati",
       email: "samir.touati@example.com",
-      Blood: "+B",
+      Blood: "B+",
       regulier: false
     },
     {
@@ -102,7 +102,7 @@ export const donors: Donor[] = [
       firste_name: "Khadija",
       last_name: "Mansouri",
       email: "khadija.mansouri@example.com",
-      Blood: "-AB",
+      Blood: "AB-",
       regulier: true
     },
     {
@@ -110,7 +110,7 @@ export const donors: Donor[] = [
       firste_name: "Walid",
       last_name: "Cherif",
       email: "walid.cherif@example.com",
-      Blood: "+O",
+      Blood: "O+",
       regulier: true
     },
     {
@@ -118,7 +118,7 @@ export const donors: Donor[] = [
       firste_name: "Fatima",
       last_name: "Zerrouki",
       email: "fatima.zerrouki@example.com",
-      Blood: "-O",
+      Blood: "O-",
       regulier: false
     }
   ];

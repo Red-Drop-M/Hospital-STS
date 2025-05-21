@@ -12,6 +12,12 @@
   }
 }
 
+@layer components {
+  .progress-custom-fill::after {
+    background-color: var(--progress-fill);
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
