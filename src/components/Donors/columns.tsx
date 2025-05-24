@@ -7,13 +7,18 @@ type BloodType = "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
 
   
 export type Donor = {
-    id : string;
-    firste_name : string ;
-    last_name : string ;
-    email : string;
-    Blood : BloodType;
-    regulier : boolean;
-}
+  id: string;
+  name: string;
+  email: string;
+  Blood: BloodType;
+  address: string;
+  NIN: string;
+  phoneNumber: string;
+  dateOfBirth: string;
+  lastDonationDate?: string;
+  regulier?: boolean;
+  // Ajoutez d'autres champs selon votre DTO
+};
 
 export const DonorColumns: ColumnDef<Donor>[] = [
     {

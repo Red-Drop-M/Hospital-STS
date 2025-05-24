@@ -84,12 +84,14 @@ export default function  Header () {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                            <Link href="/account">Profil</Link>
+                            <Link href="/services">Services</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                            <Link href="/settings">Parametres</Link>
+                            <Link href="/users">Users</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Deconnexion</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href="/admins">Admin</Link>
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
