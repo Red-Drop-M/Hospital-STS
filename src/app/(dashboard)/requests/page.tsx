@@ -4,7 +4,8 @@ import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useToast } from "@/hooks/use-toast"
-import { getRequests, createRequest } from "@/lib/reqAPI"
+import { getRequests, createRequest , BloodType,Priority,RequestStatus, BloodBagType
+ } from "@/lib/reqAPI"
 import GenericTable from "@/components/GeneriComponents/genericTable"
 import { columns } from "@/components/requests/columns"
 import { Button } from "@/components/ui/button"
@@ -21,35 +22,64 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
-type Filters = {
-  bloodType?: string
-  priority?: string
-  status?: string
-  searchQuery?: string
-}
+// export type RequestStatus = "pending" | "resolved" | "partial" | "cancled" | "rejected";
 
-// Schéma de validation pour la création
+type Filters = {
+  bloodType?: BloodType;
+  priority?: "critical" | "standard" | "low"; // Correspond aux valeurs de l'API
+  status?: "pending" | "resolved" | "partial"; // Correspond aux valeurs de l'API
+  searchQuery?: string;
+};
+
+// Updated schema to match API interface
 const createRequestSchema = z.object({
-  BloodType: z.string().min(1, "Blood type is required"),
-  BloodBagType: z.string().min(1, "Blood bag type is required"),
-  Priority: z.string().min(1, "Priority is required"),
-  DueDate: z.date().optional(),
-  MoreDetails: z.string().optional(),
-  ServiceId: z.string().optional(),
-  DonorId: z.string().optional(),
-  RequestStatus: z.string().min(1, "Status is required"),
-  RequestDate: z.date({
+  bloodType: z.string().min(1, "Blood type is required"),
+  bloodBagType: z.string().min(1, "Blood bag type is required"),
+  priority: z.enum(["critical", "standard", "low"], {
+    required_error: "Priority is required",
+  }),
+  requestDate: z.date({
     required_error: "Request date is required",
   }),
-  AquiredQty: z.number().min(0, "Quantity must be positive"),
-  RequiredQty: z.number().min(1, "Required quantity must be at least 1"),
+  requiredQty: z.number().min(1, "Required quantity must be at least 1"),
+  status: z.enum(["pending", "resolved", "partial", "cancled", "rejected"], {
+    required_error: "Status is required",
+  }).optional(),
+  dueDate: z.date().optional(),
+  aquiredQty: z.number().min(0, "Quantity must be positive").optional(),
+  moreDetails: z.string().optional(),
+  serviceId: z.string().optional(),
+  donorId: z.string().optional(),
 })
 
-type FormData = z.infer<typeof createRequestSchema>
+type FormData = z.infer<typeof createRequestSchema>;
+
+type Request = {
+  id: string;
+  bloodType: string;
+  bloodBagType: string;
+  priority: "critical" | "standard" | "low";
+  status: "pending" | "resolved" | "partial" | "cancled" | "rejected";
+  requestDate: string;
+  dueDate?: string;
+  requiredQty: number;
+  aquiredQty: number;
+  moreDetails?: string;
+  serviceId?: string;
+  donorId?: string;
+};
+
+const statusMap = {
+  pending: 'Pending',
+  resolved: 'Resolved',
+  partial: 'Partial',
+  cancled: 'Canceled',
+  rejected: 'Rejected',
+};
 
 export default function Requests() {
   const [open, setOpen] = useState(false)
-  const [requests, setRequests] = useState<any[]>([])
+  const [requests, setRequests] = useState<Request[]>([])
   const [loading, setLoading] = useState(true)
   const [submitLoading, setSubmitLoading] = useState(false)
   const [pageIndex, setPageIndex] = useState(0)
@@ -58,54 +88,84 @@ export default function Requests() {
   const { toast } = useToast()
   const pageSize = 10
 
-  // Configuration du formulaire avec react-hook-form
+  // Form configuration
   const form = useForm<FormData>({
     resolver: zodResolver(createRequestSchema),
     defaultValues: {
-      BloodType: "",
-      BloodBagType: "",
-      Priority: "",
-      RequestStatus: "",
-      AquiredQty: 0,
-      RequiredQty: 1,
-      RequestDate: new Date(),
-      DueDate: undefined,
-      MoreDetails: "",
-      ServiceId: "",
-      DonorId: "",
+      bloodType: "",
+      bloodBagType: "",
+      priority: "standard",
+      status: "pending",
+      aquiredQty: 0,
+      requiredQty: 1,
+      requestDate: new Date(),
+      dueDate: undefined,
+      moreDetails: "",
+      serviceId: "",
+      donorId: "",
     },
   })
 
-  // Chargement des requêtes
+  // Load requests
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        console.log("Fetching with filters:", filters)
-        setLoading(true)
+        setLoading(true);
 
-        // Correct priority mapping
-        let priorityValue
-        if (filters.priority === "High") priorityValue = "critical"
-        else if (filters.priority === "Medium") priorityValue = "standard"
-        else if (filters.priority === "Low") priorityValue = "low"
+        const query = new URLSearchParams({
+          Page: (pageIndex + 1).toString(),
+          PageSize: pageSize.toString(),
+          BloodType: filters.bloodType || "",
+          Priority: filters.priority || "",
+          Status: filters.status || "",
+          searchQuery: filters.searchQuery || "",
+        });
 
-        const { requests } = await getRequests({
-          Page: pageIndex + 1,
-          PageSize: pageSize,
-          BloodType: filters.bloodType,
-          Priority: priorityValue,
-          Status: filters.status?.toLowerCase(),
-        })
-        setRequests(requests)
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+        const url = `${API_URL}/bloodrequests?${query}`;
+        console.log("Fetching from URL:", url);
+
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
+          },
+        });
+
+        if (!response.ok) {
+          console.error("Fetch failed with status:", response.status);
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Fetched data:", data);
+
+        const transformedData = data
+          .map((request: any) => ({
+            id: request.id,
+            bloodType: request.BloodType,
+            bloodBagType: request.BloodBagType,
+            priority: request.Priority,
+            status: request.RequestStatus,
+            requestDate: request.RequestDate,
+            dueDate: request.DueDate,
+            requiredQty: request.RequiredQty,
+            aquiredQty: request.AquiredQty,
+            moreDetails: request.MoreDetails,
+            serviceId: request.ServiceId,
+            donorId: request.DonorId,
+          }))
+          .sort((a: Request, b: Request) => new Date(b.requestDate).getTime() - new Date(a.requestDate).getTime()); // Tri par date décroissante
+
+        setRequests(transformedData);
       } catch (error) {
-        console.error("Fetch error:", error)
+        console.error("Fetch error:", error);
         toast({
           title: "Error",
           description: error instanceof Error ? error.message : "Failed to load requests",
           variant: "destructive",
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
@@ -114,52 +174,94 @@ export default function Requests() {
 
   const handleSubmit = async (values: FormData) => {
     try {
-      setSubmitLoading(true)
-      const newRequest = await createRequest({
-        ...values,
-        dueDate: values.DueDate?.toISOString().split("T")[0],
-        requestDate: values.RequestDate.toISOString().split("T")[0],
-        status: values.RequestStatus as "pending" | "resolved" | "partial",
-      })
+      // Préparez les données à envoyer à l'API
+      const requestData = {
+        bloodType: values.bloodType as BloodType,
+        bloodBagType: values.bloodBagType as BloodBagType,
+        priority: values.priority,
+        status: values.status || "pending",
+        requestDate: values.requestDate.toISOString(),
+        dueDate: values.dueDate?.toISOString(),
+        requiredQty: values.requiredQty,
+        aquiredQty: values.aquiredQty || 0,
+        moreDetails: values.moreDetails,
+        serviceId: values.serviceId,
+        donorId: values.donorId,
+      };
 
-      setRequests((prev) => [newRequest, ...prev])
+      // Envoyez les données à l'API
+      const newRequest = await createRequest(requestData);
+
+      // Transformez les données reçues de l'API pour correspondre au tableau
+      const transformedRequest: Request = {
+        id: newRequest.id,
+        bloodType: newRequest.bloodType,
+        bloodBagType: newRequest.bloodBagType,
+        priority: newRequest.priority,
+        status: newRequest.status,
+        requestDate: newRequest.requestDate,
+        dueDate: newRequest.dueDate,
+        requiredQty: newRequest.requiredQty,
+        aquiredQty: newRequest.aquiredQty,
+        moreDetails: newRequest.moreDetails,
+        serviceId: newRequest.serviceId,
+        donorId: newRequest.donorId,
+      };
+
+      // Ajoutez la nouvelle requête au début de l'état et triez les données
+      setRequests((prev) => {
+        const updatedRequests = [transformedRequest, ...prev];
+        return updatedRequests.sort(
+          (a, b) => new Date(b.requestDate).getTime() - new Date(a.requestDate).getTime()
+        );
+      });
+
       toast({
         title: "Success",
         description: "Request created successfully",
-      })
-      setOpen(false)
-      form.reset()
+      });
+
+      setOpen(false);
+      form.reset();
     } catch (error) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to create request",
         variant: "destructive",
-      })
-    } finally {
-      setSubmitLoading(false)
+      });
     }
   }
 
-  // Filtrage des données
-  const filteredData = requests.filter((request: any) => {
-    if (filters.bloodType && request.bloodType !== filters.bloodType) return false
-    if (filters.priority) {
-      const requestPriority =
-        request.priority === "critical" ? "High" : request.priority === "standard" ? "Medium" : "Low"
-      if (requestPriority !== filters.priority) return false
+  // Filter data
+  const filteredData = requests.filter((request) => {
+    // Filtrer par statut
+    if (filters.status && request.status.toLowerCase() !== filters.status.toLowerCase()) {
+      return false;
     }
-    if (filters.status) {
-      const requestStatus = request.status.charAt(0).toUpperCase() + request.status.slice(1)
-      if (requestStatus !== filters.status) return false
+
+    // Autres filtres (groupe sanguin, priorité, etc.)
+    if (filters.bloodType && request.bloodType.toLowerCase() !== filters.bloodType.toLowerCase()) {
+      return false;
     }
+
+    if (filters.priority && request.priority !== filters.priority) {
+      return false;
+    }
+
+    // Filtrer par recherche
     if (filters.searchQuery) {
-      const searchLower = filters.searchQuery.toLowerCase()
-      return request.bloodType.toLowerCase().includes(searchLower) || request.id.toLowerCase().includes(searchLower)
+      const searchLower = filters.searchQuery.toLowerCase();
+      return (
+        request.bloodType.toLowerCase().includes(searchLower) ||
+        request.id.toLowerCase().includes(searchLower) ||
+        (request.moreDetails && request.moreDetails.toLowerCase().includes(searchLower))
+      );
     }
-    return true
+
+    return true;
   })
 
-  const paginatedData = filteredData.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
+  const paginatedData = filteredData.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
   const pageCount = Math.ceil(filteredData.length / pageSize)
 
   const handleFilterChange = (key: keyof Filters, value: string) => {
@@ -168,8 +270,8 @@ export default function Requests() {
   }
 
   const resetFilters = () => {
-    setFilters({})
-    setPageIndex(0)
+    setFilters({});
+    setPageIndex(0);
   }
 
   return (
@@ -177,26 +279,26 @@ export default function Requests() {
       <div className="flex justify-between items-center">
         <h1 className="font-bold text-3xl tracking-tight">Blood Requests</h1>
         <div className="flex items-center gap-2">
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog modal={false} open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button className="gap-1 bg-red-900 hover:bg-red-800">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline-block">New Request</span>
               </Button>
             </DialogTrigger>
+
             <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Blood Request</DialogTitle>
               </DialogHeader>
 
-              {/* Formulaire intégré directement */}
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Blood Type */}
                     <FormField
                       control={form.control}
-                      name="BloodType"
+                      name="bloodType"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
@@ -224,7 +326,7 @@ export default function Requests() {
                     {/* Blood Bag Type */}
                     <FormField
                       control={form.control}
-                      name="BloodBagType"
+                      name="bloodBagType"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
@@ -250,7 +352,7 @@ export default function Requests() {
                     {/* Priority */}
                     <FormField
                       control={form.control}
-                      name="Priority"
+                      name="priority"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
@@ -276,7 +378,7 @@ export default function Requests() {
                     {/* Status */}
                     <FormField
                       control={form.control}
-                      name="RequestStatus"
+                      name="status"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
@@ -292,6 +394,8 @@ export default function Requests() {
                               <SelectItem value="pending">Pending</SelectItem>
                               <SelectItem value="resolved">Resolved</SelectItem>
                               <SelectItem value="partial">Partial</SelectItem>
+                              <SelectItem value="cancled">Canceled</SelectItem>
+                              <SelectItem value="rejected">Rejected</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -302,7 +406,7 @@ export default function Requests() {
                     {/* Required Quantity */}
                     <FormField
                       control={form.control}
-                      name="RequiredQty"
+                      name="requiredQty"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
@@ -324,7 +428,7 @@ export default function Requests() {
                     {/* Acquired Quantity */}
                     <FormField
                       control={form.control}
-                      name="AquiredQty"
+                      name="aquiredQty"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Acquired Quantity</FormLabel>
@@ -344,7 +448,7 @@ export default function Requests() {
                     {/* Request Date */}
                     <FormField
                       control={form.control}
-                      name="RequestDate"
+                      name="requestDate"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel>
@@ -360,7 +464,7 @@ export default function Requests() {
                                     !field.value && "text-muted-foreground",
                                   )}
                                 >
-                                  {field.value ? format(field.value, "dd/MM/yyyy") : <span>Sélectionner une date</span>}
+                                  {field.value ? format(field.value, "dd/MM/yyyy") : <span>Select date</span>}
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
                               </FormControl>
@@ -388,7 +492,7 @@ export default function Requests() {
                     {/* Due Date */}
                     <FormField
                       control={form.control}
-                      name="DueDate"
+                      name="dueDate"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel>Due Date</FormLabel>
@@ -405,13 +509,13 @@ export default function Requests() {
                                   {field.value ? (
                                     format(field.value, "dd/MM/yyyy")
                                   ) : (
-                                    <span>Sélectionner une date (optionnel)</span>
+                                    <span>Select date (optional)</span>
                                   )}
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
+                            <PopoverContent className="w-auto p-0" side="top" onOpenAutoFocus={(e) => e.preventDefault()}>
                               <Calendar
                                 mode="single"
                                 selected={field.value}
@@ -433,7 +537,7 @@ export default function Requests() {
                   {/* Service ID */}
                   <FormField
                     control={form.control}
-                    name="ServiceId"
+                    name="serviceId"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Service ID</FormLabel>
@@ -448,7 +552,7 @@ export default function Requests() {
                   {/* Donor ID */}
                   <FormField
                     control={form.control}
-                    name="DonorId"
+                    name="donorId"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Donor ID</FormLabel>
@@ -463,7 +567,7 @@ export default function Requests() {
                   {/* More Details */}
                   <FormField
                     control={form.control}
-                    name="MoreDetails"
+                    name="moreDetails"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Additional Details</FormLabel>
@@ -557,15 +661,9 @@ export default function Requests() {
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Low">
-                    <Badge className="bg-gray-100 text-gray-600">Low</Badge>
-                  </SelectItem>
-                  <SelectItem value="Medium">
-                    <Badge className="bg-yellow-100 text-yellow-600">Medium</Badge>
-                  </SelectItem>
-                  <SelectItem value="High">
-                    <Badge className="bg-red-100 text-red-600">High</Badge>
-                  </SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -574,15 +672,11 @@ export default function Requests() {
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Pending">
-                    <Badge className="bg-gray-100 text-gray-600">Pending</Badge>
-                  </SelectItem>
-                  <SelectItem value="Resolved">
-                    <Badge className="bg-blue-100 text-blue-600">Resolved</Badge>
-                  </SelectItem>
-                  <SelectItem value="Partial">
-                    <Badge className="bg-green-100 text-green-600">Partial</Badge>
-                  </SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                  <SelectItem value="partial">Partial</SelectItem>
+                  <SelectItem value="cancled">Canceled</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -592,13 +686,19 @@ export default function Requests() {
             </div>
           )}
 
-          <GenericTable
-            columns={columns}
-            data={paginatedData}
-            pageCount={pageCount}
-            pageIndex={pageIndex}
-            onPageChange={setPageIndex}
-          />
+          {loading && <p>Loading...</p>}
+          {!loading && requests.length === 0 && (
+            <p>No requests found.</p>
+          )}
+          {!loading && requests.length > 0 && (
+            <GenericTable
+              columns={columns(setRequests)}
+              data={paginatedData}
+              pageCount={pageCount}
+              pageIndex={pageIndex}
+              onPageChange={setPageIndex}
+            />
+          )}
         </CardContent>
       </Card>
     </main>

@@ -1,11 +1,17 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// Types d'énumération stricts
+export type Priority = 'critical' | 'standard' | 'low';
+export type BloodBagType = 'blood' | 'plaquette' | 'plasma';
+export type RequestStatus = 'pending' | 'resolved' | 'partial' | 'cancled' | 'rejected';
+export type BloodType = 'A-' | 'A+' | 'B-' | 'B+' | 'AB-' | 'AB+' | 'O-' | 'O+';
+
 interface RequestDto {
   id: string;
-  bloodType: string;
-  bloodBagType: string;
-  priority: 'critical' | 'standard' | 'low';
-  status: 'pending' | 'resolved' | 'partial' | 'cancled' | 'rejected';
+  bloodType: BloodType;
+  bloodBagType: BloodBagType;
+  priority: Priority;
+  status: RequestStatus;
   requestDate: string;
   dueDate?: string;
   requiredQty: number;
@@ -15,105 +21,139 @@ interface RequestDto {
   donorId?: string;
 }
 
-interface ApiResponse<T> {
-  content?: T;
-  success?: boolean;
-  error?: any;
-  Message?: string;
-  StatusCode?: number;
+interface ApiError {
+  Message: string;
+  ErrorCode?: number;
+  Details?: string;
 }
 
-interface ApiListResponse<T> {
-  Requests?: T[];
-  Total?: number;
-  Message?: string;
-  StatusCode?: number;
-  content?: T[];
-  success?: boolean;
-  error?: any;
+async function handleApiError(response: Response): Promise<never> {
+  const error: ApiError = await response.json().catch(() => ({
+    Message: `Erreur ${response.status}: ${response.statusText}`
+  }));
+  throw new Error(error.Message);
 }
-type CreateRequest = Partial<Omit<RequestDto,'id'>>;
-export async function createRequest(data:CreateRequest ): Promise<RequestDto> {
-  // Validation des dates
+
+function validateDate(dateStr: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    throw new Error("Le format de date doit être YYYY-MM-DD");
+  }
+  return dateStr;
+}
+
+export async function createRequest(data: Omit<RequestDto, 'id'>): Promise<RequestDto> {
   const requestData = {
-    ...data,
-    DueDate: data.dueDate || null,
-    RequestDate: data.requestDate
+    BloodType: data.bloodType,
+    BloodBagType: data.bloodBagType,
+    Priority: data.priority,
+    DueDate: data.dueDate ? validateDate(data.dueDate.split('T')[0]) : null,
+    MoreDetails: data.moreDetails,
+    ServiceId: data.serviceId,
+    DonorId: data.donorId,
+    RequestStatus: data.status,
+    RequestDate: validateDate(data.requestDate.split('T')[0]),
+    AquiredQty: data.aquiredQty,
+    RequiredQty: data.requiredQty,
   };
+
   const response = await fetch(`${API_URL}/bloodrequests`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
     },
-    body: JSON.stringify(requestData)
+    body: JSON.stringify(requestData),
   });
 
-  const result: ApiResponse<RequestDto> = await response.json();
-  
-  if (!response.ok || (result.StatusCode !== undefined && result.StatusCode >= 400)) {
-    throw new Error(result.Message || 'Failed to create request');
-  }
-
-  if (!result.content) {
-    throw new Error('No request data returned from server');
-  }
-
-  return result.content;
+  if (!response.ok) await handleApiError(response);
+  return await response.json();
 }
 
-export async function getRequests(params: {
+interface GetRequestsParams {
   Page?: number;
   PageSize?: number;
-  Priority?: string;
-  BloodBagType?: string;
+  Priority?: Priority;
+  BloodBagType?: BloodBagType;
   RequestDate?: string;
   DueDate?: string;
   DonorId?: string;
   ServiceId?: string;
-  Status?: string;
-  BloodType?: string;
-}): Promise<{ requests: RequestDto[]; total: number }> {
+  Status?: RequestStatus;
+  BloodType?: BloodType;
+}
+export async function getRequests(params: GetRequestsParams = {}): Promise<{ requests: RequestDto[]; total: number }> {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined) query.append(key, value.toString());
   });
 
-  try {
-    const response = await fetch(`${API_URL}/bloodrequests?${query}`);
-    
-    if (!response.ok) {
-      // Si l'API ne répond pas, utilisez les données mockées directement
-      console.warn('API not responding, using fallback data');
-      const fallbackData: RequestDto[] = [
-        {
-          id: "fallback-1",
-          bloodType: "A+",
-          bloodBagType: "blood",
-          priority: "critical",
-          status: "pending",
-          requestDate: new Date().toISOString(),
-          dueDate: new Date(Date.now() + 86400000).toISOString(),
-          requiredQty: 3,
-          aquiredQty: 1,
-          moreDetails: "Fallback data"
-        }
-      ];
-      return { requests: fallbackData, total: 1 };
+  const response = await fetch(`${API_URL}/bloodrequests?${query}`, {
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('authToken')}`
     }
+  });
 
-    const data = await response.json();
-    
-    // Gestion des deux formats de réponse (API réelle et json-server)
-    const requests = data.Requests || data.content || data;
-    const total = data.Total || (Array.isArray(data) ? data.length : 0);
+  if (!response.ok) await handleApiError(response);
 
-    return {
-      requests: Array.isArray(requests) ? requests : [],
-      total
-    };
-  } catch (error) {
-    console.error('Fetch error:', error);
-    return { requests: [], total: 0 };
-  }
+  const data = await response.json();
+  return {
+    requests: data.Requests || [],
+    total: data.Total || 0
+  };
+}
+
+export async function deleteRequest(id: string): Promise<{ message: string; statusCode: number }> {
+  const response = await fetch(`${API_URL}/bloodrequests/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+    },
+  });
+
+  if (!response.ok) await handleApiError(response);
+
+  const data = await response.json();
+  return {
+    message: data.Message || "Request deleted successfully",
+    statusCode: data.StatusCode || 204,
+  };
+}
+
+export async function getRequest(id: string): Promise<RequestDto> {
+  const response = await fetch(`${API_URL}/bloodrequests/${id}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+    },
+  });
+
+  if (!response.ok) await handleApiError(response);
+
+  const data = await response.json();
+  return data.Request;
+}
+
+export async function updateRequest(id: string, data: Partial<Omit<RequestDto, 'id'>>): Promise<RequestDto> {
+  const requestData = {
+    BloodBagType: data.bloodBagType,
+    Priority: data.priority,
+    DueDate: data.dueDate ? validateDate(data.dueDate.split('T')[0]) : null,
+    MoreDetails: data.moreDetails,
+    RequiredQty: data.requiredQty,
+    RequestDate: data.requestDate ? validateDate(data.requestDate.split('T')[0]) : null,
+  };
+
+  const response = await fetch(`${API_URL}/bloodrequests/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+    },
+    body: JSON.stringify(requestData),
+  });
+
+  if (!response.ok) await handleApiError(response);
+
+  const responseData = await response.json();
+  return responseData.Request;
 }

@@ -1,17 +1,17 @@
 {
   "users": [
     {
-      "id": 1,
+      "id": "1",
       "name": "Alice"
     },
     {
-      "id": 2,
+      "id": "2",
       "name": "Bob"
     }
   ],
   "posts": [
     {
-      "id": 1,
+      "id": "1",
       "title": "Hello world",
       "author": "Alice"
     }
@@ -21,280 +21,184 @@
       "bloodType": "A+",
       "bloodBagType": "Plasma",
       "readyCount": 320,
-      "criticalStock": 100
+      "criticalStock": 100,
+      "id": "befb"
     },
     {
       "bloodType": "A-",
       "bloodBagType": "Plasma",
       "readyCount": 120,
-      "criticalStock": 50
+      "criticalStock": 50,
+      "id": "2102"
     },
     {
       "bloodType": "B+",
       "bloodBagType": "Plasma",
       "readyCount": 80,
-      "criticalStock": 50
+      "criticalStock": 50,
+      "id": "0fc6"
     },
     {
       "bloodType": "B-",
       "bloodBagType": "Plasma",
       "readyCount": 110,
-      "criticalStock": 50
+      "criticalStock": 50,
+      "id": "22c9"
     },
     {
       "bloodType": "AB+",
       "bloodBagType": "Plasma",
       "readyCount": 90,
-      "criticalStock": 40
+      "criticalStock": 40,
+      "id": "342c"
     },
     {
       "bloodType": "AB-",
       "bloodBagType": "Plasma",
       "readyCount": 30,
-      "criticalStock": 20
+      "criticalStock": 20,
+      "id": "ddbc"
     },
     {
       "bloodType": "O+",
       "bloodBagType": "Plasma",
       "readyCount": 200,
-      "criticalStock": 80
+      "criticalStock": 80,
+      "id": "753f"
     },
     {
       "bloodType": "O-",
       "bloodBagType": "Plasma",
       "readyCount": 70,
-      "criticalStock": 30
+      "criticalStock": 30,
+      "id": "d3d9"
     },
     {
       "bloodType": "A+",
       "bloodBagType": "Plaquette",
       "readyCount": 180,
-      "criticalStock": 80
+      "criticalStock": 80,
+      "id": "9c07"
     },
     {
       "bloodType": "A-",
       "bloodBagType": "Plaquette",
       "readyCount": 60,
-      "criticalStock": 30
+      "criticalStock": 30,
+      "id": "cf73"
     },
     {
       "bloodType": "B+",
       "bloodBagType": "Plaquette",
       "readyCount": 50,
-      "criticalStock": 25
+      "criticalStock": 25,
+      "id": "16c1"
     },
     {
       "bloodType": "B-",
       "bloodBagType": "Plaquette",
       "readyCount": 40,
-      "criticalStock": 20
+      "criticalStock": 20,
+      "id": "a7f7"
     },
     {
       "bloodType": "AB+",
       "bloodBagType": "Plaquette",
       "readyCount": 30,
-      "criticalStock": 15
+      "criticalStock": 15,
+      "id": "a643"
     },
     {
       "bloodType": "AB-",
       "bloodBagType": "Plaquette",
       "readyCount": 10,
-      "criticalStock": 5
+      "criticalStock": 5,
+      "id": "48c1"
     },
     {
       "bloodType": "O+",
       "bloodBagType": "Plaquette",
       "readyCount": 210,
-      "criticalStock": 80
+      "criticalStock": 80,
+      "id": "e7ad"
     },
     {
       "bloodType": "O-",
       "bloodBagType": "Plaquette",
       "readyCount": 50,
-      "criticalStock": 25
+      "criticalStock": 25,
+      "id": "8ac6"
     }
   ],
   "bloodrequests": [
     {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      "bloodType": "A+",
-      "bloodBagType": "blood",
-      "priority": "critical",
-      "requestDate": "2023-10-15T00:00:00",
-      "dueDate": "2023-10-20T00:00:00",
-      "status": "pending",
-      "moreDetails": "Urgent need for surgery patient X",
-      "requiredQty": 3,
-      "aquiredQty": 1,
-      "serviceId": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
-      "donorId": null
-    },
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa8",
-      "bloodType": "B-",
-      "bloodBagType": "plasma",
-      "priority": "standard",
-      "requestDate": "2023-10-16T00:00:00",
-      "dueDate": "2023-10-22T00:00:00",
-      "status": "partial",
-      "moreDetails": "Regular transfusion for patient Y",
-      "requiredQty": 2,
-      "aquiredQty": 1,
-      "serviceId": "3fa85f64-5717-4562-b3fc-2c963f66afa9",
-      "donorId": "3fa85f64-5717-4562-b3fc-2c963f66afb0"
-    },
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afb1",
-      "bloodType": "O+",
-      "bloodBagType": "plaquette",
-      "priority": "low",
-      "requestDate": "2023-10-17T00:00:00",
-      "dueDate": null,
-      "status": "resolved",
-      "moreDetails": null,
-      "requiredQty": 1,
-      "aquiredQty": 1,
-      "serviceId": null,
-      "donorId": "3fa85f64-5717-4562-b3fc-2c963f66afb2"
-    },
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afb3",
-      "bloodType": "AB+",
-      "bloodBagType": "blood",
-      "priority": "critical",
-      "requestDate": "2023-10-18T00:00:00",
-      "dueDate": "2023-10-19T00:00:00",
-      "status": "cancled",
-      "moreDetails": "Cancelled - patient condition improved",
-      "requiredQty": 4,
-      "aquiredQty": 0,
-      "serviceId": "3fa85f64-5717-4562-b3fc-2c963f66afb4",
-      "donorId": null
-    },
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afb5",
-      "bloodType": "A-",
-      "bloodBagType": "blood",
-      "priority": "standard",
-      "requestDate": "2023-10-19T00:00:00",
-      "dueDate": "2023-10-25T00:00:00",
-      "status": "rejected",
-      "moreDetails": "Rejected - incompatible donor",
-      "requiredQty": 2,
-      "aquiredQty": 0,
-      "serviceId": "3fa85f64-5717-4562-b3fc-2c963f66afb6",
-      "donorId": "3fa85f64-5717-4562-b3fc-2c963f66afb7"
-    },
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afb8",
-      "bloodType": "O-",
-      "bloodBagType": "plasma",
-      "priority": "low",
-      "requestDate": "2023-10-20T00:00:00",
-      "dueDate": null,
-      "status": "pending",
-      "moreDetails": null,
-      "requiredQty": 1,
-      "aquiredQty": 0,
-      "serviceId": null,
-      "donorId": null
-    },
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afb9",
-      "bloodType": "B+",
-      "bloodBagType": "plaquette",
-      "priority": "standard",
-      "requestDate": "2023-10-21T00:00:00",
-      "dueDate": null,
-      "status": "pending",
-      "moreDetails": null,
-      "requiredQty": 1,
-      "aquiredQty": 0,
-      "serviceId": null,
-      "donorId": null
-    },
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afba",
-      "bloodType": "AB-",
-      "bloodBagType": "blood",
-      "priority": "critical",
-      "requestDate": "2023-10-22T00:00:00",
-      "dueDate": null,
-      "status": "pending",
-      "moreDetails": null,
-      "requiredQty": 1,
-      "aquiredQty": 0,
-      "serviceId": null,
-      "donorId": null
-    },
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afbb",
-      "bloodType": "A+",
-      "bloodBagType": "plaquette",
-      "priority": "standard",
-      "requestDate": "2023-10-23T00:00:00",
-      "dueDate": null,
-      "status": "pending",
-      "moreDetails": null,
-      "requiredQty": 1,
-      "aquiredQty": 0,
-      "serviceId": null,
-      "donorId": null
-    },
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afbc",
-      "bloodType": "O+",
-      "bloodBagType": "blood",
-      "priority": "low",
-      "requestDate": "2023-10-24T00:00:00",
-      "dueDate": null,
-      "status": "pending",
-      "moreDetails": null,
-      "requiredQty": 1,
-      "aquiredQty": 0,
-      "serviceId": null,
-      "donorId": null
-    },
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afbd",
-      "bloodType": "B-",
-      "bloodBagType": "plaquette",
-      "priority": "standard",
-      "requestDate": "2023-10-25T00:00:00",
-      "dueDate": null,
-      "status": "pending",
-      "moreDetails": null,
-      "requiredQty": 1,
-      "aquiredQty": 0,
-      "serviceId": null,
-      "donorId": null
-    },
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afbe",
-      "bloodType": "AB+",
-      "bloodBagType": "plasma",
-      "priority": "critical",
-      "requestDate": "2023-10-26T00:00:00",
-      "dueDate": null,
-      "status": "pending",
-      "moreDetails": null,
-      "requiredQty": 1,
-      "aquiredQty": 0,
-      "serviceId": null,
-      "donorId": null
-    },
-    {
-      "id": "feb0",
-      "BloodType": "A-",
+      "id": "58d0",
+      "BloodType": "A+",
       "BloodBagType": "plasma",
       "Priority": "critical",
+      "DueDate": "2025-05-30",
+      "MoreDetails": "1\n",
+      "ServiceId": "",
+      "DonorId": "",
+      "RequestStatus": "cancled",
+      "RequestDate": "2025-05-18",
+      "AquiredQty": 5,
+      "RequiredQty": 5
+    },
+    {
+      "id": "8bef",
+      "BloodType": "B-",
+      "BloodBagType": "blood",
+      "Priority": "low",
       "DueDate": null,
-      "MoreDetails": "",
+      "MoreDetails": "4",
       "ServiceId": "",
       "DonorId": "",
       "RequestStatus": "pending",
-      "RequestDate": "2025-05-24",
-      "AquiredQty": 0,
+      "RequestDate": "2025-05-18",
+      "AquiredQty": 3,
+      "RequiredQty": 4
+    },
+    {
+      "id": "54c1",
+      "BloodType": "AB-",
+      "BloodBagType": "plaquette",
+      "Priority": "standard",
+      "DueDate": "2025-08-21",
+      "MoreDetails": "9",
+      "ServiceId": "",
+      "DonorId": "",
+      "RequestStatus": "pending",
+      "RequestDate": "2025-04-14",
+      "AquiredQty": 1,
+      "RequiredQty": 2
+    },
+    {
+      "id": "df84",
+      "BloodType": "A+",
+      "BloodBagType": "plasma",
+      "Priority": "standard",
+      "DueDate": "2025-05-26",
+      "MoreDetails": "11",
+      "ServiceId": "",
+      "DonorId": "",
+      "RequestStatus": "pending",
+      "RequestDate": "2025-05-19",
+      "AquiredQty": 3,
+      "RequiredQty": 3
+    },
+    {
+      "id": "d946",
+      "BloodType": "B+",
+      "BloodBagType": "plaquette",
+      "Priority": "low",
+      "DueDate": "2025-05-26",
+      "MoreDetails": "dcdc",
+      "ServiceId": "",
+      "DonorId": "",
+      "RequestStatus": "resolved",
+      "RequestDate": "2025-05-25",
+      "AquiredQty": 1,
       "RequiredQty": 1
     }
   ]
