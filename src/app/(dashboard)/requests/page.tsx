@@ -4,7 +4,7 @@ import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useToast } from "@/hooks/use-toast"
-import { getRequests, createRequest , BloodType,Priority,RequestStatus, BloodBagType
+import { getRequests, createRequest , BloodType,Priority,RequestStatus, BloodBagType, updateRequest
  } from "@/lib/reqAPI"
 import GenericTable from "@/components/GeneriComponents/genericTable"
 import { columns } from "@/components/requests/columns"
@@ -22,14 +22,7 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
-// export type RequestStatus = "pending" | "resolved" | "partial" | "cancled" | "rejected";
 
-type Filters = {
-  bloodType?: BloodType;
-  priority?: "critical" | "standard" | "low"; // Correspond aux valeurs de l'API
-  status?: "pending" | "resolved" | "partial"; // Correspond aux valeurs de l'API
-  searchQuery?: string;
-};
 
 // Updated schema to match API interface
 const createRequestSchema = z.object({
@@ -50,7 +43,18 @@ const createRequestSchema = z.object({
   moreDetails: z.string().optional(),
   serviceId: z.string().optional(),
   donorId: z.string().optional(),
-})
+});
+
+
+  
+// export type RequestStatus = "pending" | "resolved" | "partial" | "cancled" | "rejected";
+
+type Filters = {
+  bloodType?: BloodType;
+  priority?: "critical" | "standard" | "low"; // Correspond aux valeurs de l'API
+  status?: "pending" | "resolved" | "partial"; // Correspond aux valeurs de l'API
+  searchQuery?: string;
+};
 
 type FormData = z.infer<typeof createRequestSchema>;
 
@@ -78,6 +82,7 @@ const statusMap = {
 };
 
 export default function Requests() {
+
   const [open, setOpen] = useState(false)
   const [requests, setRequests] = useState<Request[]>([])
   const [loading, setLoading] = useState(true)
@@ -86,8 +91,10 @@ export default function Requests() {
   const [filters, setFilters] = useState<Filters>({})
   const [showFilters, setShowFilters] = useState(false)
   const { toast } = useToast()
-  const pageSize = 10
+  const pageSize = 10;
 
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   // Form configuration
   const form = useForm<FormData>({
     resolver: zodResolver(createRequestSchema),
@@ -106,6 +113,41 @@ export default function Requests() {
     },
   })
 
+  // Créez un deuxième formulaire pour la mise à jour
+  const updateForm = useForm<FormData>({
+    resolver: zodResolver(createRequestSchema),
+    defaultValues: {
+      bloodType: "",
+      bloodBagType: "",
+      priority: "standard",
+      status: "pending",
+      aquiredQty: 0,
+      requiredQty: 1,
+      requestDate: new Date(),
+      dueDate: undefined,
+      moreDetails: "",
+      serviceId: "",
+      donorId: "",
+    },
+  });
+  ////
+  useEffect(() => {
+  if (selectedRequest) {
+    updateForm.reset({
+      bloodType: selectedRequest.bloodType,
+      bloodBagType: selectedRequest.bloodBagType,
+      priority: selectedRequest.priority,
+      status: selectedRequest.status,
+      requestDate: new Date(selectedRequest.requestDate),
+      dueDate: selectedRequest.dueDate ? new Date(selectedRequest.dueDate) : undefined,
+      requiredQty: selectedRequest.requiredQty,
+      aquiredQty: selectedRequest.aquiredQty,
+      moreDetails: selectedRequest.moreDetails || "",
+      serviceId: selectedRequest.serviceId || "",
+      donorId: selectedRequest.donorId || "",
+    });
+  }
+}, [selectedRequest, updateForm]);
   // Load requests
   useEffect(() => {
     const fetchRequests = async () => {
@@ -173,65 +215,52 @@ export default function Requests() {
   }, [pageIndex, pageSize, filters, toast])
 
   const handleSubmit = async (values: FormData) => {
-    try {
-      // Préparez les données à envoyer à l'API
-      const requestData = {
-        bloodType: values.bloodType as BloodType,
-        bloodBagType: values.bloodBagType as BloodBagType,
-        priority: values.priority,
-        status: values.status || "pending",
-        requestDate: values.requestDate.toISOString(),
-        dueDate: values.dueDate?.toISOString(),
-        requiredQty: values.requiredQty,
-        aquiredQty: values.aquiredQty || 0,
-        moreDetails: values.moreDetails,
-        serviceId: values.serviceId,
-        donorId: values.donorId,
-      };
+  try {
+    setSubmitLoading(true);
 
-      // Envoyez les données à l'API
-      const newRequest = await createRequest(requestData);
+    const requestData = {
+      bloodType: values.bloodType as BloodType,
+      bloodBagType: values.bloodBagType as BloodBagType,
+      priority: values.priority,
+      status: values.status || "pending",
+      requestStatus: values.status || "pending",
+      requestDate: values.requestDate.toISOString(),
+      dueDate: values.dueDate?.toISOString() || null,
+      requiredQty: values.requiredQty,
+      aquiredQty: values.aquiredQty || 0,
+      moreDetails: values.moreDetails || "",
+      serviceId: values.serviceId || "",
+      donorId: values.donorId || "",
+    };
 
-      // Transformez les données reçues de l'API pour correspondre au tableau
-      const transformedRequest: Request = {
-        id: newRequest.id,
-        bloodType: newRequest.bloodType,
-        bloodBagType: newRequest.bloodBagType,
-        priority: newRequest.priority,
-        status: newRequest.status,
-        requestDate: newRequest.requestDate,
-        dueDate: newRequest.dueDate,
-        requiredQty: newRequest.requiredQty,
-        aquiredQty: newRequest.aquiredQty,
-        moreDetails: newRequest.moreDetails,
-        serviceId: newRequest.serviceId,
-        donorId: newRequest.donorId,
-      };
+    const newRequest = await createRequest(requestData);
 
-      // Ajoutez la nouvelle requête au début de l'état et triez les données
-      setRequests((prev) => {
-        const updatedRequests = [transformedRequest, ...prev];
-        return updatedRequests.sort(
-          (a, b) => new Date(b.requestDate).getTime() - new Date(a.requestDate).getTime()
-        );
-      });
+    // Mettre à jour l'état local avec la nouvelle requête
+    setRequests((prev) => {
+      const updatedRequests = [newRequest, ...prev];
+      return updatedRequests.sort(
+        (a, b) => new Date(b.requestDate).getTime() - new Date(a.requestDate).getTime()
+      );
+    });
 
-      toast({
-        title: "Success",
-        description: "Request created successfully",
-      });
+    toast({
+      title: "Success",
+      description: "Request created successfully",
+    });
 
-      setOpen(false);
-      form.reset();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create request",
-        variant: "destructive",
-      });
-    }
+    setOpen(false);
+    form.reset();
+  } catch (error) {
+    console.error("Create error:", error);
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to create request",
+      variant: "destructive",
+    });
+  } finally {
+    setSubmitLoading(false);
   }
-
+};
   // Filter data
   const filteredData = requests.filter((request) => {
     // Filtrer par statut
@@ -273,6 +302,56 @@ export default function Requests() {
     setFilters({});
     setPageIndex(0);
   }
+
+  const handleUpdate = async (values: FormData) => {
+  try {
+    if (!selectedRequest) return;
+
+    const requestData = {
+      bloodType: values.bloodType as BloodType,
+      bloodBagType: values.bloodBagType as BloodBagType,
+      priority: values.priority,
+      status: values.status,
+      requestDate: values.requestDate.toISOString(),
+      dueDate: values.dueDate?.toISOString(),
+      requiredQty: values.requiredQty,
+      aquiredQty: values.aquiredQty,
+      moreDetails: values.moreDetails,
+      serviceId: values.serviceId,
+      donorId: values.donorId,
+    };
+
+    const updatedRequest = await updateRequest(selectedRequest.id, requestData);
+
+    // Mise à jour de l'état local
+    setRequests((prev) =>
+      prev.map((request) =>
+        request.id === selectedRequest.id
+          ? {
+              ...updatedRequest,
+              requestDate: updatedRequest.requestDate,
+              dueDate: updatedRequest.dueDate,
+            }
+          : request
+      )
+    );
+
+    toast({
+      title: "Success",
+      description: "Request updated successfully",
+    });
+
+    setIsUpdateModalOpen(false);
+    setSelectedRequest(null);
+    updateForm.reset();
+  } catch (error) {
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to update request",
+      variant: "destructive",
+    });
+  }
+};
 
   return (
     <main className="w-full space-y-10 p-4 md:p-8">
@@ -612,6 +691,305 @@ export default function Requests() {
               </Form>
             </DialogContent>
           </Dialog>
+          {/* 2eme dialog */}
+              <Dialog open={isUpdateModalOpen} onOpenChange={setIsUpdateModalOpen}>
+                <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Update Blood Request</DialogTitle>
+                  </DialogHeader>
+                  <Form {...updateForm}>
+                <form onSubmit={updateForm.handleSubmit(handleUpdate)} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Blood Type */}
+                    <FormField
+                      control={updateForm.control}
+                      name="bloodType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Blood Type <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select blood type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((type) => (
+                                <SelectItem key={type} value={type}>
+                                  {type}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Blood Bag Type */}
+                    <FormField
+                      control={updateForm.control}
+                      name="bloodBagType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Blood Bag Type <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select bag type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="blood">Blood</SelectItem>
+                              <SelectItem value="plasma">Plasma</SelectItem>
+                              <SelectItem value="plaquette">Plaquette</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Priority */}
+                    <FormField
+                      control={updateForm.control}
+                      name="priority"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Priority <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select priority" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="critical">Critical</SelectItem>
+                              <SelectItem value="standard">Standard</SelectItem>
+                              <SelectItem value="low">Low</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Status */}
+                    <FormField
+                      control={updateForm.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Status <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="resolved">Resolved</SelectItem>
+                              <SelectItem value="partial">Partial</SelectItem>
+                              <SelectItem value="cancled">Canceled</SelectItem>
+                              <SelectItem value="rejected">Rejected</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Required Quantity */}
+                    <FormField
+                      control={updateForm.control}
+                      name="requiredQty"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Required Quantity <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 0)}
+                              placeholder="Enter required quantity"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Acquired Quantity */}
+                    <FormField
+                      control={updateForm.control}
+                      name="aquiredQty"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Acquired Quantity</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 0)}
+                              placeholder="Enter acquired quantity"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Request Date */}
+                    <FormField
+                      control={updateForm.control}
+                      name="requestDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>
+                            Request Date <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground",
+                                  )}
+                                >
+                                  {field.value ? format(field.value, "dd/MM/yyyy") : <span>Select date</span>}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={(date) => {
+                                  if (date) {
+                                    field.onChange(date)
+                                  }
+                                }}
+                                disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                                initialFocus
+                                defaultMonth={field.value}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Due Date */}
+                    <FormField
+                      control={updateForm.control}
+                      name="dueDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Due Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground",
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "dd/MM/yyyy")
+                                  ) : (
+                                    <span>Select date (optional)</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" side="top" onOpenAutoFocus={(e) => e.preventDefault()}>
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={(date) => {
+                                  field.onChange(date)
+                                }}
+                                disabled={(date) => date < new Date()}
+                                initialFocus
+                                defaultMonth={field.value || new Date()}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Service ID */}
+                  <FormField
+                    control={updateForm.control}
+                    name="serviceId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Service ID</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter service ID (optional)" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Donor ID */}
+                  <FormField
+                    control={updateForm.control}
+                    name="donorId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Donor ID</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter donor ID (optional)" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* More Details */}
+                  <FormField
+                    control={updateForm.control}
+                    name="moreDetails"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Additional Details</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter any additional information (optional)" rows={3} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full">
+                    Update Request
+                 </Button>
+                  </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
         </div>
       </div>
 
@@ -692,7 +1070,7 @@ export default function Requests() {
           )}
           {!loading && requests.length > 0 && (
             <GenericTable
-              columns={columns(setRequests)}
+              columns={columns(setRequests, setIsUpdateModalOpen, setSelectedRequest)}
               data={paginatedData}
               pageCount={pageCount}
               pageIndex={pageIndex}

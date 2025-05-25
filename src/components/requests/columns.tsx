@@ -60,8 +60,11 @@ const formatDate = (dateString: string | undefined): string => {
   }
 }
 
-export const columns = (setRequests: React.Dispatch<React.SetStateAction<BloodRequest[]>>): ColumnDef<BloodRequest>[] => [
-  {
+export const columns = (
+  setRequests: React.Dispatch<React.SetStateAction<BloodRequest[]>>,
+  setIsUpdateModalOpen: (open: boolean) => void,
+  setSelectedRequest: (request: BloodRequest | null) => void,
+): ColumnDef<BloodRequest>[] => [  {
     header: "ID",
     accessorKey: "id",
     cell: ({ row }) => <span className="font-mono text-sm">{row.getValue("id")}</span>,
@@ -147,37 +150,37 @@ export const columns = (setRequests: React.Dispatch<React.SetStateAction<BloodRe
       const request = row.original as BloodRequest;
 
       const handleUpdate = () => {
-        console.log("Update request:", request.id);
-        // Implémentez la logique pour ouvrir un formulaire de mise à jour
+        setSelectedRequest(request);
+        setIsUpdateModalOpen(true);
       };
 
       const handleDelete = async (id: string) => {
-  if (confirm("Are you sure you want to delete this request?")) {
-    try {
-      console.log("Deleting request with ID:", id);
+        if (confirm("Are you sure you want to delete this request?")) {
+          try {
+            console.log("Deleting request with ID:", id);
 
-      const response = await deleteRequest(id);
+            const response = await deleteRequest(id);
 
-      setRequests((prev) => {
-        const updatedRequests = prev.filter((request: BloodRequest) => request.id !== id);
-        console.log("Updated requests:", updatedRequests);
-        return updatedRequests;
-      });
+            setRequests((prev) => {
+              const updatedRequests = prev.filter((request: BloodRequest) => request.id !== id);
+              console.log("Updated requests:", updatedRequests);
+              return updatedRequests;
+            });
 
-      toast({
-        title: "Success",
-        description: response.message || "Request deleted successfully",
-      });
-    } catch (error) {
-      console.error("Failed to delete request:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete request",
-        variant: "destructive",
-      });
-    }
-  }
-};
+            toast({
+              title: "Success",
+              description: response.message || "Request deleted successfully",
+            });
+          } catch (error) {
+            console.error("Failed to delete request:", error);
+            toast({
+              title: "Error",
+              description: error instanceof Error ? error.message : "Failed to delete request",
+              variant: "destructive",
+            });
+          }
+        }
+      };
 
       return (
         <DropdownMenu>
@@ -218,8 +221,4 @@ export const columns = (setRequests: React.Dispatch<React.SetStateAction<BloodRe
 
 
 
-
-
-function setRequests(arg0: (prev: any) => any) {
-  throw new Error("Function not implemented.");
-}
+export default columns;

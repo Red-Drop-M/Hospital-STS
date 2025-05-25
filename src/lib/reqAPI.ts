@@ -7,6 +7,7 @@ export type RequestStatus = 'pending' | 'resolved' | 'partial' | 'cancled' | 're
 export type BloodType = 'A-' | 'A+' | 'B-' | 'B+' | 'AB-' | 'AB+' | 'O-' | 'O+';
 
 interface RequestDto {
+  requestStatus: any;
   id: string;
   bloodType: BloodType;
   bloodBagType: BloodBagType;
@@ -68,6 +69,7 @@ export async function createRequest(data: Omit<RequestDto, 'id'>): Promise<Reque
   if (!response.ok) await handleApiError(response);
   return await response.json();
 }
+
 
 interface GetRequestsParams {
   Page?: number;
@@ -134,14 +136,22 @@ export async function getRequest(id: string): Promise<RequestDto> {
 }
 
 export async function updateRequest(id: string, data: Partial<Omit<RequestDto, 'id'>>): Promise<RequestDto> {
+  // Ajout de tous les champs nécessaires
   const requestData = {
+    BloodType: data.bloodType,           // Ajouté
     BloodBagType: data.bloodBagType,
     Priority: data.priority,
+    RequestStatus: data.status,          // Ajouté
     DueDate: data.dueDate ? validateDate(data.dueDate.split('T')[0]) : null,
     MoreDetails: data.moreDetails,
     RequiredQty: data.requiredQty,
+    AquiredQty: data.aquiredQty,        // Ajouté
     RequestDate: data.requestDate ? validateDate(data.requestDate.split('T')[0]) : null,
+    ServiceId: data.serviceId,          // Ajouté
+    DonorId: data.donorId              // Ajouté
   };
+
+  console.log('Sending update data:', requestData); // Pour le débogage
 
   const response = await fetch(`${API_URL}/bloodrequests/${id}`, {
     method: 'PUT',
