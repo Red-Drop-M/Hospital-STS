@@ -22,14 +22,16 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { JSX } from 'react/jsx-runtime';
 
 export type FormFieldType = { 
     name: string;
     label: string;
-    type: 'text' | 'email' | 'password' | 'number' | 'select' | 'checkbox' | 'textarea' | 'radio' | 'date';
+    type: 'text' | 'email' | 'password' | 'number' | 'select' | 'checkbox' | 'textarea' | 'radio' | 'date' | 'custom';
     placeholder?: string;
     required?: boolean;
     options?: { value: string; label: string }[];
+    customInput?: ({ field }: { field: any }) => JSX.Element;
     defaultValue?: any;
     description?: string;
     validation?: any;
@@ -76,17 +78,19 @@ export function GenericForm({
                             className={field.className}
                             disabled={field.disabled}
                             {...formField}
+                            value={formField.value ?? ""} // Utilisez une chaîne vide si la valeur est `null` ou `undefined`
                         />
                     </FormControl>
                 );
             case "textarea":
                 return (
                     <FormControl>
-                        <Textarea 
+                        <Textarea
                             placeholder={field.placeholder}
                             className={field.className}
                             disabled={field.disabled}
                             {...formField}
+                            value={formField.value ?? ""} // Utilisez une chaîne vide si la valeur est `null` ou `undefined`
                         />
                     </FormControl>
                 );
@@ -161,6 +165,8 @@ export function GenericForm({
                 );
             case "radio":
                 return null;
+            case "custom":
+                return field.customInput ? field.customInput({ field: formField }) : null;
             default:
                 return null;
         }

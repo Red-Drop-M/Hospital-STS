@@ -218,14 +218,32 @@ export default function Requests() {
   try {
     setSubmitLoading(true);
 
+    // const requestData = {
+
+    //   bloodType: values.bloodType as BloodType,
+    //   bloodBagType: values.bloodBagType as BloodBagType,
+    //   priority: values.priority,
+    //   status: values.status || "pending",
+    //   requestStatus: values.status || "pending",
+    //   requestDate: values.requestDate.toISOString(),
+    //   dueDate: values.dueDate?.toISOString() || null,
+    //   requiredQty: values.requiredQty,
+    //   aquiredQty: values.aquiredQty || 0,
+    //   moreDetails: values.moreDetails || "",
+    //   serviceId: values.serviceId || "",
+    //   donorId: values.donorId || "",
+    // };
+
+    // const newRequest = await createRequest(requestData);
     const requestData = {
+
       bloodType: values.bloodType as BloodType,
       bloodBagType: values.bloodBagType as BloodBagType,
       priority: values.priority,
       status: values.status || "pending",
       requestStatus: values.status || "pending",
       requestDate: values.requestDate.toISOString(),
-      dueDate: values.dueDate?.toISOString() || null,
+      dueDate: values.dueDate ? values.dueDate.toISOString() : undefined,
       requiredQty: values.requiredQty,
       aquiredQty: values.aquiredQty || 0,
       moreDetails: values.moreDetails || "",

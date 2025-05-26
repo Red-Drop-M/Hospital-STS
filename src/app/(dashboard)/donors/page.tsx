@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import { z } from "zod"
 import GenericTable from "@/components/GeneriComponents/genericTable"
-import { DonorColumns, Donor } from "@/components/Donors/columns"
+import { DonorColumns, DonorDTO } from "@/components/Donors/columns"
 import { Droplet, ChevronDown, ChevronUp, Filter, Plus } from "lucide-react"
 import { FormFieldType } from '@/components/GeneriComponents/GenericForm'
 import { GenericForm } from "@/components/GeneriComponents/GenericForm"
@@ -10,7 +10,7 @@ import StatCard from "@/components/stat-card/page"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import {
   Card,
   CardContent,
@@ -21,7 +21,11 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { format, parseISO } from 'date-fns'
-import { getAllDonors, createDonor } from "@/lib/donors"
+import { getAllDonors, createDonor, deleteDonor, updateDonor } from "@/lib/donors"
+// Importez d'abord le DatePicker de react-datepicker
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { toast } from "@/hooks/use-toast"
 
 type BloodType = "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-"
 type Filters = {
@@ -29,9 +33,13 @@ type Filters = {
   regular?: boolean | ''
   searchQuery?: string
 }
-
+function parseDate(dateString: string): Date | null {
+  const [day, month, year] = dateString.split("-").map(Number);
+  if (!day || !month || !year) return null;
+  return new Date(year, month - 1, day); // Les mois commencent à 0 en JavaScript
+}
 export default function Donors() {
-  const [donors, setDonors] = useState<Donor[]>([])
+  const [donors, setDonors] = useState<DonorDTO[]>([]);
   const [totalDonors, setTotalDonors] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,38 +52,52 @@ export default function Donors() {
   const [showFilters, setShowFilters] = useState(false)
   const [pageIndex, setPageIndex] = useState(0)
   const pageSize = 10
-
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [selectedDonor, setSelectedDonor] = useState<DonorDTO | null>(null);
   const createDonorSchema = z.object({
-    name: z.string().min(1, "Name is required"),
-    email: z.string().email("Invalid email address"),
-    Blood: z.string().min(1, "Blood type is required"),
-    lastDonationDate: z.date().optional().nullable(),
-    address: z.string().min(1, "Address is required"),
-    NIN: z.string().min(1, "National ID is required"),
-    phoneNumber: z.string().min(1, "Phone number is required"),
-    dateOfBirth: z.date({
-      required_error: "Date of birth is required",
-      invalid_type_error: "Please select a valid date",
+    Name: z.string().min(1, "Name is required"),
+    Email: z.string().email("Invalid email address"),
+    BloodType: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"], {
+      required_error: "Blood type is required",
     }),
+    LastDonationDate: z
+      .string()
+      .optional()
+      .nullable()
+      .refine(
+        (value) => !value || /^\d{2}-\d{2}-\d{4}$/.test(value),
+        "Invalid date format. Please use dd-mm-yyyy."
+      )
+      .transform((value) => (value ? parseDate(value) : null)),
+    Address: z.string().min(1, "Address is required"),
+    NIN: z.string().min(1, "National ID is required"),
+    PhoneNumber: z.string().min(1, "Phone number is required"),
+    DateOfBirth: z
+      .string()
+      .refine(
+        (value) => /^\d{2}-\d{2}-\d{4}$/.test(value),
+        "Invalid date format. Please use dd-mm-yyyy."
+      )
+      .transform((value) => parseDate(value)),
   })
 
   const formFields: FormFieldType[] = [
     {
-      name: "name",
+      name: "Name",
       label: "Full Name",
       type: "text",
       required: true,
       placeholder: "John Doe",
     },
     {
-      name: "email",
+      name: "Email",
       label: "Email",
       type: "email",
       required: true,
       placeholder: "john.doe@example.com",
     },
     {
-      name: "Blood",
+      name: "BloodType",
       label: "Blood Type",
       type: "select",
       required: true,
@@ -91,14 +113,31 @@ export default function Donors() {
       ],
     },
     {
-      name: "lastDonationDate",
-      label: "Last Donation Date",
-      type: "date",
-      placeholder: "Select last donation date",
-      description: "Leave empty if never donated",
-    },
+  name: "LastDonationDate",
+  label: "Last Donation Date",
+  type: "text",
+  placeholder: "Enter last donation date (dd-mm-yyyy)",
+  description: "Leave empty if never donated",
+  defaultValue: "",
+  customInput: ({ field }: { field: any }) => (
+    <input
+      type="text"
+      value={field.value || ""}
+      onChange={(e) => field.onChange(e.target.value)}
+      placeholder="dd-mm-yyyy"
+      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      onBlur={(e) => {
+        const value = e.target.value;
+        const isValid = /^\d{2}-\d{2}-\d{4}$/.test(value);
+        if (!isValid && value) {
+          alert("Invalid date format. Please use dd-mm-yyyy.");
+        }
+      }}
+    />
+  ),
+},
     {
-      name: "address",
+      name: "Address",
       label: "Address",
       type: "text",
       required: true,
@@ -112,72 +151,198 @@ export default function Donors() {
       placeholder: "Enter national ID",
     },
     {
-      name: "phoneNumber",
+      name: "PhoneNumber",
       label: "Phone Number",
       type: "text",
       required: true,
       placeholder: "+1234567890",
     },
     {
-      name: "dateOfBirth",
-      label: "Date of Birth",
-      type: "date",
-      required: true,
-      placeholder: "Select date of birth",
-      description: "Donor must be at least 18 years old",
-    },
-  ]
+  name: "DateOfBirth",
+  label: "Date of Birth",
+  type: "text",
+  placeholder: "Enter date of birth (dd-mm-yyyy)",
+  description: "Donor must be at least 18 years old",
+  defaultValue: "",
+  customInput: ({ field }: { field: any }) => (
+    <input
+      type="text"
+      value={field.value || ""}
+      onChange={(e) => field.onChange(e.target.value)}
+      placeholder="dd-mm-yyyy"
+      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      onBlur={(e) => {
+        const value = e.target.value;
+        const isValid = /^\d{2}-\d{2}-\d{4}$/.test(value);
+        if (!isValid) {
+          alert("Invalid date format. Please use dd-mm-yyyy.");
+        }
+      }}
+    />
+  ),
+}
+  ];
+  // filepath: c:\Users\admin\Desktop\PFE\RED-DROP\src\app\(dashboard)\donors\page.tsx
+const defaultValues = {
+  Name: '',
+  Email: '',
+  BloodType: '',
+  LastDonationDate: null,
+  Address: '',
+  NIN: '',
+  PhoneNumber: '',
+  DateOfBirth: null,
+};
 
+  
   useEffect(() => {
     const fetchDonors = async () => {
       try {
-        setIsLoading(true)
-        const { donors, total } = await getAllDonors(pageIndex + 1, pageSize)
-        setDonors(donors)
-        setTotalDonors(total)
+        setIsLoading(true);
+        const { donors, total } = await getAllDonors(pageIndex + 1, pageSize);
+
+        setDonors(donors);
+        setTotalDonors(total);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred')
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-    
-    fetchDonors()
+    };
+
+    fetchDonors();
   }, [pageIndex, pageSize])
 
   const handleSubmit = async (values: z.infer<typeof createDonorSchema>) => {
     try {
       const formattedValues = {
-        ...values,
-        lastDonationDate: values.lastDonationDate ? format(values.lastDonationDate, 'yyyy-MM-dd') : undefined,
-        dateOfBirth: format(values.dateOfBirth, 'yyyy-MM-dd'),
-        regulier: false,
-        Blood: values.Blood as BloodType
+        Name: values.Name,
+        Email: values.Email,
+        BloodType: values.BloodType,
+        LastDonationDate: values.LastDonationDate
+          ? format(values.LastDonationDate, "yyyy-MM-dd")
+          : null,
+        Address: values.Address,
+        NIN: values.NIN,
+        PhoneNumber: values.PhoneNumber,
+        DateOfBirth: values.DateOfBirth
+          ? format(values.DateOfBirth, "yyyy-MM-dd")
+          : null,
+      };
+
+      const response = await createDonor(formattedValues);
+
+      if (response.success) {
+        console.log("Created donor ID:", response.content?.id); // Vérifiez l'ID ici
+        setDonors((prev) => [response.content!, ...prev]);
+        setTotalDonors((prev) => prev + 1);
+        setOpen(false);
+      } else {
+        setError(response.Error || "Failed to create donor");
+      }
+    } catch (err) {
+      console.error("Error creating donor:", err);
+      setError(err instanceof Error ? err.message : "Failed to create donor");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    console.log("Deleting donor with ID:", id); // Vérifiez l'ID ici
+    if (confirm("Are you sure you want to delete this donor?")) {
+      try {
+        const success = await deleteDonor(id);
+
+        if (success) {
+          setDonors((prev) => prev.filter((donor) => donor.id !== id));
+          toast({
+            title: "Success",
+            description: "Donor deleted successfully",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to delete donor",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error deleting donor:", error);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred while deleting the donor",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
+  if (!selectedDonor) return;
+  console.log("Updating donor with ID:", selectedDonor.id); // Vérifiez l'ID ici
+  try {
+    const formattedValues = {
+      Name: values.Name,
+      Email: values.Email,
+      BloodType: values.BloodType,
+      LastDonationDate: values.LastDonationDate
+        ? format(values.LastDonationDate, "yyyy-MM-dd")
+        : null,
+      Address: values.Address,
+      NIN: values.NIN,
+      PhoneNumber: values.PhoneNumber,
+      DateOfBirth: values.DateOfBirth
+        ? format(values.DateOfBirth, "yyyy-MM-dd")
+        : null,
+    };
+
+    const response = await updateDonor(selectedDonor.id, formattedValues);
+
+    if (response.success) {
+      setDonors((prev) =>
+        prev.map((donor) =>
+          donor.id === selectedDonor.id
+            ? {
+                ...donor,
+                ...formattedValues,
+                DateOfBirth: formattedValues.DateOfBirth ?? donor.DateOfBirth,
+                LastDonationDate: formattedValues.LastDonationDate ?? donor.LastDonationDate,
+              }
+            : donor
+        )
+      );
+      toast({
+        title: "Success",
+        description: "Donor updated successfully",
+      });
+      setIsUpdateModalOpen(false);
+      setSelectedDonor(null);
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to update donor",
+        variant: "destructive",
+      });
+    }
+  } catch (error) {
+    console.error("Error updating donor:", error);
+    toast({
+      title: "Error",
+      description: "An unexpected error occurred while updating the donor",
+      variant: "destructive",
+    });
+  }
+};
+  const filterRequests = (): DonorDTO[] => {
+    return donors.filter(donor => {
+      if (filters.Blood && donor.BloodType !== filters.Blood) {
+        return false
       }
       
-      const newDonor = await createDonor(formattedValues)
-      setDonors(prev => [newDonor, ...prev])
-      setTotalDonors(prev => prev + 1)
-      setOpen(false)
-    } catch (err) {
-      console.error("Error creating donor:", err)
-      setError("Failed to create donor")
-    }
-  }
-
-  const filterRequests = (): Donor[] => {
-    return donors.filter(donor => {
-      if (filters.Blood && donor.Blood !== filters.Blood) {
-        return false
-      }
-      if (filters.regular !== undefined && donor.regulier !== filters.regular) {
-        return false
-      }
       if (filters.searchQuery) {
         const searchLower = filters.searchQuery.toLowerCase()
         return (
-          donor.name.toLowerCase().includes(searchLower) ||
-          donor.email.toLowerCase().includes(searchLower)
+          donor.Name.toLowerCase().includes(searchLower) ||
+          donor.Email.toLowerCase().includes(searchLower)
         )
       }
       return true
@@ -216,7 +381,7 @@ export default function Donors() {
       <div className="flex justify-between items-center">
         <h1 className="font-bold text-3xl tracking-tight">Donors Management</h1>
         <div className="flex items-center gap-2">
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog modal={false} open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button className="gap-1 bg-red-900 hover:bg-red-800">
                 <Plus className="h-4 w-4" />
@@ -232,9 +397,45 @@ export default function Donors() {
                 fields={formFields}
                 onSubmit={handleSubmit}
                 submitButtonText="Register Donor"
+                defaultValues={defaultValues} // Ajout des valeurs par défaut
               />
             </DialogContent>
           </Dialog>
+          <Dialog modal={false} open={isUpdateModalOpen} onOpenChange={setIsUpdateModalOpen}>
+  <DialogContent
+    className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto"
+    aria-describedby="update-donor-description"
+  >
+    <DialogHeader>
+      <DialogTitle>Update Donor</DialogTitle>
+      <DialogDescription id="update-donor-description">
+        Use the form below to update the donor's information.
+      </DialogDescription>
+    </DialogHeader>
+    {selectedDonor && (
+      <GenericForm
+        formSchema={createDonorSchema}
+        fields={formFields}
+        onSubmit={handleUpdate}
+        submitButtonText="Update Donor"
+        defaultValues={{
+          Name: selectedDonor.Name,
+          Email: selectedDonor.Email,
+          BloodType: selectedDonor.BloodType,
+          LastDonationDate: selectedDonor.LastDonationDate
+            ? parseISO(selectedDonor.LastDonationDate)
+            : null,
+          Address: selectedDonor.Address,
+          NIN: selectedDonor.NIN,
+          PhoneNumber: selectedDonor.PhoneNumber,
+          DateOfBirth: selectedDonor.DateOfBirth
+            ? parseISO(selectedDonor.DateOfBirth)
+            : null,
+        }}
+      />
+    )}
+  </DialogContent>
+</Dialog>
         </div>
       </div>
 
@@ -245,7 +446,7 @@ export default function Donors() {
           value={totalDonors.toString()}
           change="+12% from last month" 
         />
-        <StatCard 
+        {/* <StatCard 
           title="Active Donors"
           icon={Droplet}
           value={donors.filter(d => d.regulier).length.toString()}
@@ -256,7 +457,7 @@ export default function Donors() {
           icon={Droplet}
           value={donors.filter(d => !d.regulier).length.toString()}
           change="+7% from last month" 
-        />
+        /> */}
         <StatCard 
           title="Avg. Donations"
           icon={Droplet}
@@ -340,8 +541,9 @@ export default function Donors() {
           )}
 
           <div className="w-full mt-4">
-            <GenericTable<Donor>
-              columns={DonorColumns}
+            
+            <GenericTable<DonorDTO>
+              columns={DonorColumns(setDonors, setIsUpdateModalOpen, setSelectedDonor)}
               data={paginatedData}
               pageCount={pageCount}
               pageIndex={pageIndex}

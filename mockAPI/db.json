@@ -244,20 +244,6 @@
       "DonorId": ""
     },
     {
-      "id": "4ebb",
-      "BloodType": "AB-",
-      "BloodBagType": "plasma",
-      "Priority": "standard",
-      "DueDate": "2025-05-27",
-      "MoreDetails": "oh my good ",
-      "ServiceId": "89",
-      "DonorId": "099",
-      "RequestStatus": "pending",
-      "RequestDate": "2025-05-25",
-      "AquiredQty": 0,
-      "RequiredQty": 1
-    },
-    {
       "id": "054d",
       "BloodType": "A+",
       "BloodBagType": "plasma",
@@ -272,21 +258,20 @@
       "DonorId": ""
     },
     {
-      "id": "9351",
-      "BloodType": "B-",
+      "BloodType": "A+",
       "BloodBagType": "plasma",
       "Priority": "standard",
-      "RequestStatus": "pending",
+      "RequestStatus": "resolved",
       "DueDate": "2025-05-29",
       "MoreDetails": "hiiiiiihoooo",
       "RequiredQty": 1,
-      "AquiredQty": 0,
+      "AquiredQty": 1,
       "RequestDate": "2025-05-25",
       "ServiceId": "",
-      "DonorId": ""
+      "DonorId": "",
+      "id": "9351"
     },
     {
-      "id": "b1f8",
       "BloodType": "B-",
       "BloodBagType": "plasma",
       "Priority": "standard",
@@ -294,10 +279,11 @@
       "DueDate": "2025-05-29",
       "MoreDetails": "hiiiiiihoooo",
       "RequiredQty": 1,
-      "AquiredQty": 0,
+      "AquiredQty": 1,
       "RequestDate": "2025-05-25",
       "ServiceId": "",
-      "DonorId": ""
+      "DonorId": "",
+      "id": "b1f8"
     },
     {
       "id": "3981",
@@ -342,20 +328,6 @@
       "DonorId": ""
     },
     {
-      "id": "8840",
-      "BloodType": "B-",
-      "BloodBagType": "plasma",
-      "Priority": "critical",
-      "DueDate": "2025-05-27",
-      "MoreDetails": "علر",
-      "ServiceId": "",
-      "DonorId": "",
-      "RequestStatus": "partial",
-      "RequestDate": "2025-05-21",
-      "AquiredQty": 2,
-      "RequiredQty": 2
-    },
-    {
       "id": "25e4",
       "BloodType": "O+",
       "BloodBagType": "plasma",
@@ -368,6 +340,58 @@
       "RequestDate": "2025-05-13",
       "AquiredQty": 1,
       "RequiredQty": 2
+    },
+    {
+      "id": "0488",
+      "BloodType": "AB-",
+      "BloodBagType": "plaquette",
+      "Priority": "standard",
+      "DueDate": "2025-05-29",
+      "MoreDetails": "boumaza",
+      "ServiceId": "ik",
+      "DonorId": "un",
+      "RequestStatus": "pending",
+      "RequestDate": "2025-05-25",
+      "AquiredQty": 1,
+      "RequiredQty": 1
+    },
+    {
+      "BloodType": "AB+",
+      "BloodBagType": "plaquette",
+      "Priority": "standard",
+      "RequestStatus": "pending",
+      "DueDate": "2025-05-30",
+      "MoreDetails": "el sehaaar",
+      "RequiredQty": 1,
+      "AquiredQty": 2,
+      "RequestDate": "2025-05-19",
+      "ServiceId": "",
+      "DonorId": "",
+      "id": "63fa"
+    }
+  ],
+  "donors": [
+    {
+      "id": "416e",
+      "Name": "imad ",
+      "Email": "imadeddine@gmail.com",
+      "BloodType": "AB+",
+      "LastDonationDate": "2022-10-12",
+      "Address": "bab ezouare",
+      "NIN": "22222222222",
+      "PhoneNumber": "32344",
+      "DateOfBirth": "2004-10-15"
+    },
+    {
+      "id": "6e1e",
+      "Name": "ramzy ",
+      "Email": "ramzy@gmail.com",
+      "BloodType": "O+",
+      "LastDonationDate": "2024-09-22",
+      "Address": "bordj elbahry ",
+      "NIN": "IJ234567890",
+      "PhoneNumber": "32344",
+      "DateOfBirth": "1965-10-03"
     }
   ]
 }
