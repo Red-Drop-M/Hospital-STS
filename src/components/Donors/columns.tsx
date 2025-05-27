@@ -2,7 +2,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { deleteDonor } from "@/lib/donors";
+import { deleteDonor } from "@/lib/Donors";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Trash, Edit } from "lucide-react";

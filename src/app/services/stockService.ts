@@ -6,7 +6,7 @@ const API_URL = process.env.NODE_ENV === 'development'
 
 export const fetchBloodStockChartData = async (bloodBagType: string = "Plasma"): Promise<BloodStockChartData[]> => {
   const response = await fetch(
-    `${API_URL}/globalStocks?bloodBagType=${bloodBagType}`,
+    `${API_URL}/global-stocks?bloodBagType=${bloodBagType}`,
     {
       method: "GET",
       headers: {

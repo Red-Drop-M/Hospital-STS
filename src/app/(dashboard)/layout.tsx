@@ -27,19 +27,15 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html lang="en">
-      <body>
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
+    
           <div className="flex min-h-screen flex-col">
             <header className="sticky top-0 z-50 h-16 flex justify-between items-center gap-4 border-b bg-background px-6 md:gap-6">
               <Header />
             </header>
             <main>
-              {isClient ? children : <div>Loading...</div>}
+              {children}
             </main>
           </div>
-        </ErrorBoundary>
-      </body>
-    </html>
+        
   );
 }
