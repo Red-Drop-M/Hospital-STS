@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = 'http://localhost:5000';
 
 // Types d'énumération stricts
 export type Priority = 'critical' | 'standard' | 'low';
@@ -45,17 +45,18 @@ function validateDate(dateStr: string): string {
 export async function createRequest(data: Omit<RequestDto, 'id'>): Promise<RequestDto> {
   const requestData = {
     BloodType: data.bloodType,
-    BloodBagType: data.bloodBagType,
-    Priority: data.priority,
+    BloodBagType: data.bloodBagType.toLowerCase(),
+    Priority: data.priority.toLowerCase(),
     DueDate: data.dueDate ? validateDate(data.dueDate.split('T')[0]) : null,
     MoreDetails: data.moreDetails,
     ServiceId: data.serviceId,
     DonorId: data.donorId,
-    RequestStatus: data.status,
+    RequestStatus: data.status.toLowerCase(),
     RequestDate: validateDate(data.requestDate.split('T')[0]),
     AquiredQty: data.aquiredQty,
     RequiredQty: data.requiredQty,
   };
+  console.log('Sending request data:', requestData); // Pour le débogage
 
   const response = await fetch(`${API_URL}/bloodrequests`, {
     method: 'POST',
@@ -67,7 +68,8 @@ export async function createRequest(data: Omit<RequestDto, 'id'>): Promise<Reque
   });
 
   if (!response.ok) await handleApiError(response);
-  return await response.json();
+  const responseData= await response.json();
+  return responseData.content
 }
 
 
@@ -89,7 +91,7 @@ export async function getRequests(params: GetRequestsParams = {}): Promise<{ req
     if (value !== undefined) query.append(key, value.toString());
   });
 
-  const response = await fetch(`${API_URL}/bloodrequests?${query}`, {
+  const response = await fetch(`http://localhost:5000/bloodrequests?${query}`, {
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('authToken')}`
     }
@@ -100,12 +102,12 @@ export async function getRequests(params: GetRequestsParams = {}): Promise<{ req
   const data = await response.json();
   return {
     requests: data.Requests || [],
-    total: data.Total || 0
+    total: data.total || 0
   };
 }
 
 export async function deleteRequest(id: string): Promise<{ message: string; statusCode: number }> {
-  const response = await fetch(`${API_URL}/bloodrequests/${id}`, {
+  const response = await fetch(`http://localhost:5000/bloodrequests/${id}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -138,9 +140,11 @@ export async function getRequest(id: string): Promise<RequestDto> {
 export async function updateRequest(id: string, data: Partial<Omit<RequestDto, 'id'>>): Promise<RequestDto> {
   // Ajout de tous les champs nécessaires
   const requestData = {
+    id,
     BloodType: data.bloodType,           // Ajouté
     BloodBagType: data.bloodBagType,
     Priority: data.priority,
+    ReqyestDate: data.requestDate ? validateDate(data.requestDate.split('T')[0]) : null,
     RequestStatus: data.status,          // Ajouté
     DueDate: data.dueDate ? validateDate(data.dueDate.split('T')[0]) : null,
     MoreDetails: data.moreDetails,
@@ -153,7 +157,7 @@ export async function updateRequest(id: string, data: Partial<Omit<RequestDto, '
 
   console.log('Sending update data:', requestData); // Pour le débogage
 
-  const response = await fetch(`${API_URL}/bloodrequests/${id}`, {
+  const response = await fetch(`http://localhost:5000/bloodrequests/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -165,5 +169,30 @@ export async function updateRequest(id: string, data: Partial<Omit<RequestDto, '
   if (!response.ok) await handleApiError(response);
 
   const responseData = await response.json();
-  return responseData.Request;
+  console.log("Raw API response:", responseData);
+  
+  // Handle different possible response structures
+  if (responseData.Request) {
+    return responseData.Request;
+  } else if (responseData.requestDate || responseData.RequestDate) {
+    // Direct response object
+    return responseData;
+  } else {
+    // Create a fallback response if the API doesn't return the expected format
+    return {
+      id: id,
+      bloodType: data.bloodType as BloodType,
+      bloodBagType: data.bloodBagType as BloodBagType,
+      priority: data.priority as Priority,
+      status: data.status as RequestStatus,
+      requestDate: data.requestDate || new Date().toISOString(),
+      dueDate: data.dueDate,
+      requiredQty: data.requiredQty || 0,
+      aquiredQty: data.aquiredQty || 0,
+      moreDetails: data.moreDetails || "",
+      serviceId: data.serviceId || "",
+      donorId: data.donorId || "",
+      requestStatus: data.status as RequestStatus
+    };
+  }
 }

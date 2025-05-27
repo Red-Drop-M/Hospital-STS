@@ -26,6 +26,7 @@ import { getAllDonors, createDonor, deleteDonor, updateDonor } from "@/lib/donor
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "@/hooks/use-toast"
+import debounce from "lodash/debounce";
 
 type BloodType = "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-"
 type Filters = {
@@ -54,6 +55,8 @@ export default function Donors() {
   const pageSize = 10
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [selectedDonor, setSelectedDonor] = useState<DonorDTO | null>(null);
+  const [searchInputValue, setSearchInputValue] = useState("");
+
   const createDonorSchema = z.object({
     Name: z.string().min(1, "Name is required"),
     Email: z.string().email("Invalid email address"),
@@ -79,6 +82,7 @@ export default function Donors() {
         "Invalid date format. Please use dd-mm-yyyy."
       )
       .transform((value) => parseDate(value)),
+    NotesBTC: z.string().optional(), // Add this line
   })
 
   const formFields: FormFieldType[] = [
@@ -192,43 +196,70 @@ const defaultValues = {
   NIN: '',
   PhoneNumber: '',
   DateOfBirth: null,
+  NotesBTC: '',  // Add this line
 };
-
   
   useEffect(() => {
     const fetchDonors = async () => {
       try {
         setIsLoading(true);
-        const { donors, total } = await getAllDonors(pageIndex + 1, pageSize);
+        // Add filter parameters to the API call
+        const response = await getAllDonors(pageIndex + 1, pageSize);
+        console.log("getAllDonors response:", response);
+        const { donors, total } = response;
 
-        setDonors(donors);
+        // Transform the donor data to match expected structure
+        const transformedDonors = donors.map(donor => ({
+          id: donor.id || "",
+          Name: donor.name || "",
+          Email: donor.email || "",
+          // Fix here: Check if bloodType is an object and extract the value property
+          BloodType: typeof donor.bloodType === 'object' && donor.bloodType?.value 
+    ? donor.bloodType.value 
+    : donor.bloodType || "Unknown",
+          Address: donor.address || "",
+          NIN: donor.nin || "",
+          PhoneNumber: donor.phoneNumber || "",
+          DateOfBirth: donor.dateOfBirth || "",
+          LastDonationDate: donor.lastDonationDate || "",
+          NotesBTC: donor.notesBTC || ""
+        }));
+
+        console.log("Transformed donors:", transformedDonors);
+
+        // Use transformed data instead
+        setDonors(transformedDonors);
         setTotalDonors(total);
       } catch (err) {
+        console.error("Error fetching donors:", err);
         setError(err instanceof Error ? err.message : "An unknown error occurred");
+        setDonors([]);
+        setTotalDonors(0);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchDonors();
-  }, [pageIndex, pageSize])
+  }, [pageIndex, pageSize, filters]); // Include filters in dependencies
 
   const handleSubmit = async (values: z.infer<typeof createDonorSchema>) => {
     try {
       const formattedValues = {
-        Name: values.Name,
-        Email: values.Email,
-        BloodType: values.BloodType,
-        LastDonationDate: values.LastDonationDate
+        name: values.Name,                     // lowercase for API
+        email: values.Email,                   // lowercase for API
+        bloodType: values.BloodType,           // lowercase for API
+        lastDonationDate: values.LastDonationDate
           ? format(values.LastDonationDate, "yyyy-MM-dd")
-          : null,
-        Address: values.Address,
-        NIN: values.NIN,
-        PhoneNumber: values.PhoneNumber,
-        DateOfBirth: values.DateOfBirth
+          : "",
+        address: values.Address,               // lowercase for API
+        nin: values.NIN,                       // lowercase for API
+        phoneNumber: values.PhoneNumber,       // lowercase for API
+        dateOfBirth: values.DateOfBirth
           ? format(values.DateOfBirth, "yyyy-MM-dd")
-          : null,
-      };
+          : "", // Empty string instead of undefined
+        notesBTC: values.NotesBTC || ""        // lowercase for API
+    };
 
       const response = await createDonor(formattedValues);
 
@@ -281,18 +312,19 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
   console.log("Updating donor with ID:", selectedDonor.id); // Vérifiez l'ID ici
   try {
     const formattedValues = {
-      Name: values.Name,
-      Email: values.Email,
-      BloodType: values.BloodType,
-      LastDonationDate: values.LastDonationDate
-        ? format(values.LastDonationDate, "yyyy-MM-dd")
-        : null,
-      Address: values.Address,
-      NIN: values.NIN,
-      PhoneNumber: values.PhoneNumber,
-      DateOfBirth: values.DateOfBirth
+      name: values.Name,
+      email: values.Email,
+      bloodType: values.BloodType,
+      lastDonationDate: values.LastDonationDate
+        ? format(values.LastDonationDate, "yyyy-MM-dd") 
+        : "",
+      address: values.Address,
+      nin: values.NIN,
+      phoneNumber: values.PhoneNumber,
+      dateOfBirth: values.DateOfBirth
         ? format(values.DateOfBirth, "yyyy-MM-dd")
-        : null,
+        : "",
+      notesBTC: values.NotesBTC || ""
     };
 
     const response = await updateDonor(selectedDonor.id, formattedValues);
@@ -304,8 +336,8 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
             ? {
                 ...donor,
                 ...formattedValues,
-                DateOfBirth: formattedValues.DateOfBirth ?? donor.DateOfBirth,
-                LastDonationDate: formattedValues.LastDonationDate ?? donor.LastDonationDate,
+                DateOfBirth: formattedValues.dateOfBirth ?? donor.dateOfBirth,
+                LastDonationDate: formattedValues.lastDonationDate ?? donor.lastDonationDate,
               }
             : donor
         )
@@ -334,19 +366,29 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
 };
   const filterRequests = (): DonorDTO[] => {
     return donors.filter(donor => {
+      // Check for BloodType filter (uppercase "B")
       if (filters.Blood && donor.BloodType !== filters.Blood) {
-        return false
+        return false;
       }
       
+      // Check for regular donor filter
+      if (filters.regular !== '' && donor.regular !== filters.regular) {
+        return false;
+      }
+      
+      // Check for search query
       if (filters.searchQuery) {
-        const searchLower = filters.searchQuery.toLowerCase()
+        const searchLower = filters.searchQuery.toLowerCase();
         return (
           donor.Name.toLowerCase().includes(searchLower) ||
-          donor.Email.toLowerCase().includes(searchLower)
-        )
+          donor.Email.toLowerCase().includes(searchLower) ||
+          donor.PhoneNumber.toLowerCase().includes(searchLower) ||
+          (donor.NotesBTC && donor.NotesBTC.toLowerCase().includes(searchLower))
+        );
       }
-      return true
-    })
+      
+      return true;
+    });
   }
 
   const handleFilterChange = <K extends keyof Filters>(
@@ -365,13 +407,27 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
     })
   }
 
+  // Handle input change without triggering search
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchInputValue(value);
+  };
+
+  // Only apply search filter when Enter key is pressed
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleFilterChange('searchQuery', searchInputValue);
+    }
+  };
+
   const toggleFilters = () => {
     setShowFilters(!showFilters)
   }
 
+  // You create filtered data here
   const filteredData = filterRequests()
-  const paginatedData = filteredData.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize)
-  const pageCount = Math.ceil(filteredData.length / pageSize)
+  const paginatedData = filteredData // No slicing needed - API already returns paginated data
+  const pageCount = Math.ceil(totalDonors / pageSize)
 
   if (isLoading) return <div>Loading...</div>
   if (error) return <div>Error: {error}</div>
@@ -419,18 +475,19 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
         onSubmit={handleUpdate}
         submitButtonText="Update Donor"
         defaultValues={{
-          Name: selectedDonor.Name,
-          Email: selectedDonor.Email,
-          BloodType: selectedDonor.BloodType,
-          LastDonationDate: selectedDonor.LastDonationDate
-            ? parseISO(selectedDonor.LastDonationDate)
+          Name: selectedDonor.name,
+          Email: selectedDonor.email,
+          BloodType: selectedDonor.bloodType,
+          LastDonationDate: selectedDonor.lastDonationDate
+            ? parseISO(selectedDonor.lastDonationDate)
             : null,
-          Address: selectedDonor.Address,
-          NIN: selectedDonor.NIN,
-          PhoneNumber: selectedDonor.PhoneNumber,
-          DateOfBirth: selectedDonor.DateOfBirth
-            ? parseISO(selectedDonor.DateOfBirth)
+          Address: selectedDonor.address,
+          NIN: selectedDonor.nin,
+          PhoneNumber: selectedDonor.phoneNumber,
+          DateOfBirth: selectedDonor.dateOfBirth
+            ? parseISO(selectedDonor.dateOfBirth)
             : null,
+          NotesBTC: selectedDonor.notesBTC || '', // Add this line
         }}
       />
     )}
@@ -490,8 +547,9 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
             <Input
               placeholder="Search donors..."
               className="w-full md:w-[300px]"
-              value={filters.searchQuery}
-              onChange={(e) => handleFilterChange('searchQuery', e.target.value)}
+              value={searchInputValue}
+              onChange={handleSearchInputChange}
+              onKeyDown={handleSearchKeyDown} // Add this line
             />
           </div>
 
@@ -541,14 +599,19 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
           )}
 
           <div className="w-full mt-4">
-            
-            <GenericTable<DonorDTO>
-              columns={DonorColumns(setDonors, setIsUpdateModalOpen, setSelectedDonor)}
-              data={paginatedData}
-              pageCount={pageCount}
-              pageIndex={pageIndex}
-              onPageChange={setPageIndex}
-            />
+            {donors.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No donors found. Try adjusting your filters or add new donors.
+              </div>
+            ) : (
+              <GenericTable<DonorDTO>
+                columns={DonorColumns(setDonors, setIsUpdateModalOpen, setSelectedDonor)}
+                data={filteredData} // Use filtered data
+                pageCount={pageCount}
+                pageIndex={pageIndex}
+                onPageChange={setPageIndex}
+              />
+            )}
           </div>
         </CardContent>
       </Card>

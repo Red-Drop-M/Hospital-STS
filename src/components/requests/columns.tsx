@@ -108,12 +108,13 @@ export const columns = (
     cell: ({ row }) => {
       const status = row.getValue("status") as keyof typeof statusMap;
       return (
-        <Badge className={`${statusMap[status]} font-semibold`}>
+        <Badge className={`${statusMap[status] || 'bg-gray-100 text-gray-800'} font-semibold`}>
           {status === "pending" && "Pending"}
           {status === "resolved" && "Resolved"}
           {status === "partial" && "Partial"}
           {status === "cancled" && "Canceled"}
           {status === "rejected" && "Rejected"}
+          {!["pending", "resolved", "partial", "cancled", "rejected"].includes(status) && (status || "Unknown")}
         </Badge>
       );
     },

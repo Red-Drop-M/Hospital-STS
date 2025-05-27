@@ -1,21 +1,20 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/header";
-export default function RootLayout({
+export default function DashboardLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-        <body>
-          
-            <main>
-            {children}
-            </main>
-          
-        </body>
-      
+    <html>
+      <body>
+        <main>
+          {children}
+        </main>
+      </body>
     </html>
-  );
+  )
+    
+    
 }

@@ -1,10 +1,11 @@
 // src/api/donors.ts
 import { DonorDTO } from "@/components/Donors/columns";
 
-const API_URL = "http://localhost:3001/donors"; // JSON Server
+const API_URL = "http://localhost:5000/donors"; // JSON Server
 // const API_URL = "http://localhost:5000/donors"; // Pour votre backend réel
 
 // Interface pour la réponse du backend réel
+
 interface BackendResponse<T> {
   Donors?: T[];
   content?: T;
@@ -13,24 +14,27 @@ interface BackendResponse<T> {
 }
 
 export const getAllDonors = async (page: number = 1, pageSize: number = 10): Promise<{ donors: DonorDTO[], total: number }> => {
-  const response = await fetch(`${API_URL}?page=${page}&pageSize=${pageSize}`);
-  if (!response.ok) throw new Error('Failed to fetch donors');
+  try {
+    const response = await fetch(`http://localhost:5000/donors?Page=${page}&PageSize=${pageSize}`);
+    if (!response.ok) throw new Error('Failed to fetch donors');
 
-  const jsonData = await response.json();
-
-  // Tri des donneurs par ordre décroissant (par exemple, par DateOfBirth ou ID)
-  const sortedDonors = jsonData.sort((a: DonorDTO, b: DonorDTO) => {
-    // Remplacez `DateOfBirth` par une propriété pertinente comme `createdAt` si disponible
-    return new Date(b.DateOfBirth).getTime() - new Date(a.DateOfBirth).getTime();
-  });
-
-  return {
-    donors: sortedDonors,
-    total: jsonData.length,
-  };
+    const data = await response.json();
+    console.log("Raw API response:", data);
+    
+    // Make sure we handle different API response formats
+    return {
+      // Handle both "donors" and "Donors" properties
+      donors: data.donors || data.Donors || [], 
+      total: data.total || data.Total || 0
+    };
+  } catch (error) {
+    console.error("Error fetching donors:", error);
+    return { donors: [], total: 0 };
+  }
 };
 
-export const createDonor = async (donorData: Omit<DonorDTO, 'Id'>): Promise<CreateDonorResponse> => {
+// Update the type to match your actual interface property (lowercase 'id')
+export const createDonor = async (donorData: Omit<DonorDTO, 'id'>): Promise<CreateDonorResponse> => {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
@@ -72,9 +76,10 @@ export const deleteDonor = async (id: string): Promise<boolean> => {
   }
 };
 
+// Similarly for updateDonor
 export const updateDonor = async (
   id: string,
-  updatedData: Partial<DonorDTO>
+  updatedData: Partial<Omit<DonorDTO, 'id'>>
 ): Promise<{ success: boolean; content?: DonorDTO; Error?: string }> => {
   try {
     const url = `${API_URL}/${id}`;

@@ -16,8 +16,9 @@ export interface DonorDTO {
   BloodType: string;
   Address: string;
   NIN: string;
+  NotesBTC?:string;
   PhoneNumber: string;
-  DateOfBirth: string;
+  DateOfBirth?: string; // Make it optional with ?
   LastDonationDate?: string;
 }
 export const DonorColumns = (

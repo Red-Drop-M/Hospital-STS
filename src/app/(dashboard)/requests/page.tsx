@@ -90,6 +90,7 @@ export default function Requests() {
   const [pageIndex, setPageIndex] = useState(0)
   const [filters, setFilters] = useState<Filters>({})
   const [showFilters, setShowFilters] = useState(false)
+  const [totalCount, setTotalCount] = useState(0) // Add this line
   const { toast } = useToast()
   const pageSize = 10;
 
@@ -164,7 +165,7 @@ export default function Requests() {
         });
 
         const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
-        const url = `${API_URL}/bloodrequests?${query}`;
+        const url = `http://localhost:5000/bloodrequests?${query}`;
         console.log("Fetching from URL:", url);
 
         const response = await fetch(url, {
@@ -181,24 +182,25 @@ export default function Requests() {
         const data = await response.json();
         console.log("Fetched data:", data);
 
-        const transformedData = data
-          .map((request: any) => ({
-            id: request.id,
-            bloodType: request.BloodType,
-            bloodBagType: request.BloodBagType,
-            priority: request.Priority,
-            status: request.RequestStatus,
-            requestDate: request.RequestDate,
-            dueDate: request.DueDate,
-            requiredQty: request.RequiredQty,
-            aquiredQty: request.AquiredQty,
-            moreDetails: request.MoreDetails,
-            serviceId: request.ServiceId,
-            donorId: request.DonorId,
-          }))
-          .sort((a: Request, b: Request) => new Date(b.requestDate).getTime() - new Date(a.requestDate).getTime()); // Tri par date décroissante
-
+        const transformedData = data.requests.map((request: any) => ({
+          id: request.id,
+          bloodType: request.bloodType,
+          bloodBagType: request.bloodBagType,
+          priority: request.priority,
+          status: request.status,  // Note this transformation!
+          requestDate: request.requestDate,
+          dueDate: request.dueDate,
+          requiredQty: request.requiredQty,
+          aquiredQty: request.aquiredQty,
+          moreDetails: request.moreDetails,
+          serviceId: request.serviceId,
+          donorId: request.donorId,
+        }))
+        .sort((a: Request, b: Request) => new Date(b.requestDate).getTime() - new Date(a.requestDate).getTime()); // Tri par date décroissante
+        console.log("Transformed data:", transformedData);
         setRequests(transformedData);
+        setTotalCount(data.total || 0); // Store the total count from API
+   
       } catch (error) {
         console.error("Fetch error:", error);
         toast({
@@ -250,6 +252,7 @@ export default function Requests() {
       serviceId: values.serviceId || "",
       donorId: values.donorId || "",
     };
+    console.log("Sending request data:", requestData); // Pour le débogage
 
     const newRequest = await createRequest(requestData);
 
@@ -308,8 +311,8 @@ export default function Requests() {
     return true;
   })
 
-  const paginatedData = filteredData.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
-  const pageCount = Math.ceil(filteredData.length / pageSize)
+  const paginatedData = filteredData;
+  const pageCount = Math.ceil(totalCount / pageSize);
 
   const handleFilterChange = (key: keyof Filters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
@@ -340,15 +343,17 @@ export default function Requests() {
     };
 
     const updatedRequest = await updateRequest(selectedRequest.id, requestData);
+    console.log("API response:", updatedRequest); // Debug output
 
-    // Mise à jour de l'état local
+    // Fixed update logic with fallbacks
     setRequests((prev) =>
       prev.map((request) =>
         request.id === selectedRequest.id
           ? {
-              ...updatedRequest,
-              requestDate: updatedRequest.requestDate,
-              dueDate: updatedRequest.dueDate,
+              ...request, // Use existing request as base
+              ...updatedRequest, // Apply updates that exist
+              requestDate: updatedRequest?.requestDate || request.requestDate,
+              dueDate: updatedRequest?.dueDate || request.dueDate,
             }
           : request
       )
@@ -1087,6 +1092,8 @@ export default function Requests() {
             <p>No requests found.</p>
           )}
           {!loading && requests.length > 0 && (
+            <>
+            {console.log("Data before table render:", requests)}
             <GenericTable
               columns={columns(setRequests, setIsUpdateModalOpen, setSelectedRequest)}
               data={paginatedData}
@@ -1094,6 +1101,7 @@ export default function Requests() {
               pageIndex={pageIndex}
               onPageChange={setPageIndex}
             />
+            </>
           )}
         </CardContent>
       </Card>
