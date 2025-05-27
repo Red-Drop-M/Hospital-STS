@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { format, parseISO } from 'date-fns'
-import { getAllDonors, createDonor, deleteDonor, updateDonor } from "@/lib/donors"
+import { getAllDonors, createDonor, deleteDonor, updateDonor } from "@/lib/Donors"
 // Importez d'abord le DatePicker de react-datepicker
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
