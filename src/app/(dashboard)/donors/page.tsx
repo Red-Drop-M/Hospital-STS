@@ -81,9 +81,22 @@ export default function Donors() {
         (value) => /^\d{2}-\d{2}-\d{4}$/.test(value),
         "Invalid date format. Please use dd-mm-yyyy."
       )
+      .refine((value) => {
+        const date = parseDate(value);
+        if (!date) return false;
+        const today = new Date();
+        const age = today.getFullYear() - date.getFullYear();
+        const monthDiff = today.getMonth() - date.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
+          return age - 1 >= 18;
+        }
+        return age >= 18;
+      }, "Donor must be at least 18 years old")
       .transform((value) => parseDate(value)),
     NotesBTC: z.string().optional(), // Add this line
   })
+
+  const updateDonorSchema = createDonorSchema.partial();
 
   const formFields: FormFieldType[] = [
     {
@@ -309,7 +322,7 @@ const defaultValues = {
 
 const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
   if (!selectedDonor) return;
-  console.log("Updating donor with ID:", selectedDonor.id); // Vérifiez l'ID ici
+  console.log("Updating donor with ID:", selectedDonor.id);
   try {
     const formattedValues = {
       name: values.Name,
@@ -330,18 +343,49 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
     const response = await updateDonor(selectedDonor.id, formattedValues);
 
     if (response.success) {
+      // Fix here - use PascalCase property names that match your component
       setDonors((prev) =>
         prev.map((donor) =>
           donor.id === selectedDonor.id
             ? {
                 ...donor,
-                ...formattedValues,
-                DateOfBirth: formattedValues.dateOfBirth ?? donor.dateOfBirth,
-                LastDonationDate: formattedValues.lastDonationDate ?? donor.lastDonationDate,
+                Name: values.Name,
+                Email: values.Email,
+                BloodType: values.BloodType,
+                Address: values.Address, 
+                NIN: values.NIN,
+                PhoneNumber: values.PhoneNumber,
+                DateOfBirth: values.DateOfBirth 
+                  ? format(values.DateOfBirth, "yyyy-MM-dd")
+                  : donor.DateOfBirth,
+                LastDonationDate: values.LastDonationDate
+                  ? format(values.LastDonationDate, "yyyy-MM-dd")
+                  : donor.LastDonationDate,
+                NotesBTC: values.NotesBTC || ""
               }
             : donor
         )
       );
+      
+      // Add detailed logging of the update
+      console.log("Donor updated successfully:", {
+        id: selectedDonor.id,
+        before: selectedDonor,
+        after: {
+          ...selectedDonor,
+          Name: values.Name,
+          Email: values.Email,
+          BloodType: values.BloodType,
+          Address: values.Address,
+          NIN: values.NIN,
+          PhoneNumber: values.PhoneNumber,
+          DateOfBirth: formattedValues.dateOfBirth ?? donor.dateOfBirth,
+          LastDonationDate: formattedValues.lastDonationDate ?? donor.lastDonationDate,
+          NotesBTC: values.NotesBTC || ""
+        },
+        apiResponse: response
+      });
+      
       toast({
         title: "Success",
         description: "Donor updated successfully",
@@ -470,24 +514,24 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
     </DialogHeader>
     {selectedDonor && (
       <GenericForm
-        formSchema={createDonorSchema}
+        formSchema={updateDonorSchema}
         fields={formFields}
         onSubmit={handleUpdate}
         submitButtonText="Update Donor"
         defaultValues={{
-          Name: selectedDonor.name,
-          Email: selectedDonor.email,
-          BloodType: selectedDonor.bloodType,
-          LastDonationDate: selectedDonor.lastDonationDate
-            ? parseISO(selectedDonor.lastDonationDate)
-            : null,
-          Address: selectedDonor.address,
-          NIN: selectedDonor.nin,
-          PhoneNumber: selectedDonor.phoneNumber,
-          DateOfBirth: selectedDonor.dateOfBirth
-            ? parseISO(selectedDonor.dateOfBirth)
-            : null,
-          NotesBTC: selectedDonor.notesBTC || '', // Add this line
+          Name: selectedDonor.Name,
+          Email: selectedDonor.Email,
+          BloodType: selectedDonor.BloodType,
+          LastDonationDate: selectedDonor.LastDonationDate
+            ? format(parseISO(selectedDonor.LastDonationDate), "dd-MM-yyyy") // Format as string
+            : "",
+          Address: selectedDonor.Address,
+          NIN: selectedDonor.NIN,
+          PhoneNumber: selectedDonor.PhoneNumber,
+          DateOfBirth: selectedDonor.DateOfBirth
+            ? format(parseISO(selectedDonor.DateOfBirth), "dd-MM-yyyy") // Format as string
+            : "",
+          NotesBTC: selectedDonor.NotesBTC || '',
         }}
       />
     )}
