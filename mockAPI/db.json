@@ -16,118 +16,222 @@
       "author": "Alice"
     }
   ],
-  "globalStocks": [
+  "global-stocks": [
     {
-      "bloodType": "A+",
-      "bloodBagType": "Plasma",
-      "readyCount": 320,
-      "criticalStock": 100,
-      "id": "befb"
+      "BloodType": "A+",
+      "BloodBagType": "blood",
+      "CountExpired": 5,
+      "CountExpiring": 3,
+      "ReadyCount": 78,
+      "MinStock": 30,
+      "CriticalStock": 20
     },
     {
-      "bloodType": "A-",
-      "bloodBagType": "Plasma",
-      "readyCount": 120,
-      "criticalStock": 50,
-      "id": "2102"
+      "BloodType": "A-",
+      "BloodBagType": "blood",
+      "CountExpired": 2,
+      "CountExpiring": 4,
+      "ReadyCount": 62,
+      "MinStock": 35,
+      "CriticalStock": 23
     },
     {
-      "bloodType": "B+",
-      "bloodBagType": "Plasma",
-      "readyCount": 80,
-      "criticalStock": 50,
-      "id": "0fc6"
+      "BloodType": "B+",
+      "BloodBagType": "blood",
+      "CountExpired": 3,
+      "CountExpiring": 2,
+      "ReadyCount": 85,
+      "MinStock": 40,
+      "CriticalStock": 25
     },
     {
-      "bloodType": "B-",
-      "bloodBagType": "Plasma",
-      "readyCount": 110,
-      "criticalStock": 50,
-      "id": "22c9"
+      "BloodType": "B-",
+      "BloodBagType": "blood",
+      "CountExpired": 1,
+      "CountExpiring": 3,
+      "ReadyCount": 58,
+      "MinStock": 30,
+      "CriticalStock": 20
     },
     {
-      "bloodType": "AB+",
-      "bloodBagType": "Plasma",
-      "readyCount": 90,
-      "criticalStock": 40,
-      "id": "342c"
+      "BloodType": "AB+",
+      "BloodBagType": "blood",
+      "CountExpired": 4,
+      "CountExpiring": 1,
+      "ReadyCount": 42,
+      "MinStock": 20,
+      "CriticalStock": 12
     },
     {
-      "bloodType": "AB-",
-      "bloodBagType": "Plasma",
-      "readyCount": 30,
-      "criticalStock": 20,
-      "id": "ddbc"
+      "BloodType": "AB-",
+      "BloodBagType": "blood",
+      "CountExpired": 1,
+      "CountExpiring": 2,
+      "ReadyCount": 35,
+      "MinStock": 18,
+      "CriticalStock": 10
     },
     {
-      "bloodType": "O+",
-      "bloodBagType": "Plasma",
-      "readyCount": 200,
-      "criticalStock": 80,
-      "id": "753f"
+      "BloodType": "O+",
+      "BloodBagType": "blood",
+      "CountExpired": 6,
+      "CountExpiring": 5,
+      "ReadyCount": 120,
+      "MinStock": 50,
+      "CriticalStock": 30
     },
     {
-      "bloodType": "O-",
-      "bloodBagType": "Plasma",
-      "readyCount": 70,
-      "criticalStock": 30,
-      "id": "d3d9"
+      "BloodType": "O-",
+      "BloodBagType": "blood",
+      "CountExpired": 2,
+      "CountExpiring": 4,
+      "ReadyCount": 90,
+      "MinStock": 45,
+      "CriticalStock": 25
     },
     {
-      "bloodType": "A+",
-      "bloodBagType": "Plaquette",
-      "readyCount": 180,
-      "criticalStock": 80,
-      "id": "9c07"
+      "BloodType": "A+",
+      "BloodBagType": "plaquette",
+      "CountExpired": 2,
+      "CountExpiring": 5,
+      "ReadyCount": 45,
+      "MinStock": 25,
+      "CriticalStock": 15
     },
     {
-      "bloodType": "A-",
-      "bloodBagType": "Plaquette",
-      "readyCount": 60,
-      "criticalStock": 30,
-      "id": "cf73"
+      "BloodType": "A-",
+      "BloodBagType": "plaquette",
+      "CountExpired": 1,
+      "CountExpiring": 3,
+      "ReadyCount": 30,
+      "MinStock": 20,
+      "CriticalStock": 12
     },
     {
-      "bloodType": "B+",
-      "bloodBagType": "Plaquette",
-      "readyCount": 50,
-      "criticalStock": 25,
-      "id": "16c1"
+      "BloodType": "B+",
+      "BloodBagType": "plaquette",
+      "CountExpired": 1,
+      "CountExpiring": 4,
+      "ReadyCount": 50,
+      "MinStock": 30,
+      "CriticalStock": 18
     },
     {
-      "bloodType": "B-",
-      "bloodBagType": "Plaquette",
-      "readyCount": 40,
-      "criticalStock": 20,
-      "id": "a7f7"
+      "BloodType": "B-",
+      "BloodBagType": "plaquette",
+      "CountExpired": 0,
+      "CountExpiring": 2,
+      "ReadyCount": 28,
+      "MinStock": 18,
+      "CriticalStock": 10
     },
     {
-      "bloodType": "AB+",
-      "bloodBagType": "Plaquette",
-      "readyCount": 30,
-      "criticalStock": 15,
-      "id": "a643"
+      "BloodType": "AB+",
+      "BloodBagType": "plaquette",
+      "CountExpired": 2,
+      "CountExpiring": 3,
+      "ReadyCount": 22,
+      "MinStock": 15,
+      "CriticalStock": 8
     },
     {
-      "bloodType": "AB-",
-      "bloodBagType": "Plaquette",
-      "readyCount": 10,
-      "criticalStock": 5,
-      "id": "48c1"
+      "BloodType": "AB-",
+      "BloodBagType": "plaquette",
+      "CountExpired": 0,
+      "CountExpiring": 1,
+      "ReadyCount": 18,
+      "MinStock": 12,
+      "CriticalStock": 6
     },
     {
-      "bloodType": "O+",
-      "bloodBagType": "Plaquette",
-      "readyCount": 210,
-      "criticalStock": 80,
-      "id": "e7ad"
+      "BloodType": "O+",
+      "BloodBagType": "plaquette",
+      "CountExpired": 3,
+      "CountExpiring": 6,
+      "ReadyCount": 65,
+      "MinStock": 35,
+      "CriticalStock": 20
     },
     {
-      "bloodType": "O-",
-      "bloodBagType": "Plaquette",
-      "readyCount": 50,
-      "criticalStock": 25,
-      "id": "8ac6"
+      "BloodType": "O-",
+      "BloodBagType": "plaquette",
+      "CountExpired": 1,
+      "CountExpiring": 3,
+      "ReadyCount": 48,
+      "MinStock": 30,
+      "CriticalStock": 18
+    },
+    {
+      "BloodType": "A+",
+      "BloodBagType": "plasma",
+      "CountExpired": 1,
+      "CountExpiring": 2,
+      "ReadyCount": 60,
+      "MinStock": 20,
+      "CriticalStock": 10
+    },
+    {
+      "BloodType": "A-",
+      "BloodBagType": "plasma",
+      "CountExpired": 0,
+      "CountExpiring": 1,
+      "ReadyCount": 42,
+      "MinStock": 15,
+      "CriticalStock": 8
+    },
+    {
+      "BloodType": "B+",
+      "BloodBagType": "plasma",
+      "CountExpired": 2,
+      "CountExpiring": 1,
+      "ReadyCount": 55,
+      "MinStock": 25,
+      "CriticalStock": 15
+    },
+    {
+      "BloodType": "B-",
+      "BloodBagType": "plasma",
+      "CountExpired": 1,
+      "CountExpiring": 0,
+      "ReadyCount": 38,
+      "MinStock": 15,
+      "CriticalStock": 8
+    },
+    {
+      "BloodType": "AB+",
+      "BloodBagType": "plasma",
+      "CountExpired": 0,
+      "CountExpiring": 1,
+      "ReadyCount": 35,
+      "MinStock": 12,
+      "CriticalStock": 6
+    },
+    {
+      "BloodType": "AB-",
+      "BloodBagType": "plasma",
+      "CountExpired": 0,
+      "CountExpiring": 0,
+      "ReadyCount": 25,
+      "MinStock": 10,
+      "CriticalStock": 5
+    },
+    {
+      "BloodType": "O+",
+      "BloodBagType": "plasma",
+      "CountExpired": 2,
+      "CountExpiring": 3,
+      "ReadyCount": 80,
+      "MinStock": 30,
+      "CriticalStock": 18
+    },
+    {
+      "BloodType": "O-",
+      "BloodBagType": "plasma",
+      "CountExpired": 1,
+      "CountExpiring": 2,
+      "ReadyCount": 60,
+      "MinStock": 25,
+      "CriticalStock": 15
     }
   ],
   "bloodrequests": [
@@ -368,6 +472,34 @@
       "ServiceId": "",
       "DonorId": "",
       "id": "63fa"
+    },
+    {
+      "id": "5d92",
+      "BloodType": "B+",
+      "BloodBagType": "plaquette",
+      "Priority": "critical",
+      "DueDate": "2025-05-29",
+      "MoreDetails": "ahyliik ",
+      "ServiceId": "",
+      "DonorId": "",
+      "RequestStatus": "resolved",
+      "RequestDate": "2025-05-14",
+      "AquiredQty": 3,
+      "RequiredQty": 4
+    },
+    {
+      "id": "1555",
+      "BloodType": "B+",
+      "BloodBagType": "plaquette",
+      "Priority": "standard",
+      "DueDate": "2025-05-28",
+      "MoreDetails": "kefaat",
+      "ServiceId": "89",
+      "DonorId": "099",
+      "RequestStatus": "pending",
+      "RequestDate": "2025-05-22",
+      "AquiredQty": 2,
+      "RequiredQty": 3
     }
   ],
   "donors": [
@@ -393,5 +525,45 @@
       "PhoneNumber": "32344",
       "DateOfBirth": "1965-10-03"
     }
-  ]
+  ],
+  "bloodStocks": [
+    {
+      "BloodType": "A+",
+      "BloodBagType": "blood",
+      "CountExpired": 5,
+      "CountExpiring": 3,
+      "ReadyCount": 25,
+      "MinStock": 30,
+      "CriticalStock": 20
+    },
+    {
+      "BloodType": "A+",
+      "BloodBagType": "plasma",
+      "CountExpired": 2,
+      "CountExpiring": 1,
+      "ReadyCount": 10,
+      "MinStock": 5,
+      "CriticalStock": 2
+    },
+    {
+      "BloodType": "B-",
+      "BloodBagType": "blood",
+      "CountExpired": 0,
+      "CountExpiring": 0,
+      "ReadyCount": 15,
+      "MinStock": 10,
+      "CriticalStock": 5
+    },
+    {
+      "BloodType": "AB-",
+      "BloodBagType": "plaquette",
+      "CountExpired": 1,
+      "CountExpiring": 0,
+      "ReadyCount": 8,
+      "MinStock": 5,
+      "CriticalStock": 2
+    }
+  ],
+  "test": true,
+  "dataLoaded": true
 }

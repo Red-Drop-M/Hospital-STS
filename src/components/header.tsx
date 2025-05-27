@@ -30,6 +30,7 @@ export default function  Header () {
         {name : "Requests ", path: "/requests"},
         {name : "Donors ", path: "/donors"},
         {name : "Stock ", path: "/stock"},
+        {name : "DonorPledges ", path: "/donorpledges"},
     ]
 
     return (

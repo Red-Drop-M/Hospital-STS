@@ -1,9 +1,5 @@
 // Types pour les stocks globaux
-export type BloodType = 
-  | "A-" | "A+" 
-  | "B-" | "B+" 
-  | "AB-" | "AB+" 
-  | "O-" | "O+"
+export type BloodType = | "A-" | "A+" | "B-" | "B+" | "AB-" | "AB+" | "O-" | "O+";
 
 export type BloodBagType = "blood" | "plaquette" | "plasma"
 
@@ -73,9 +69,10 @@ export async function getAllGlobalStocks(
       }
     }
 
-    const data: GlobalStocksListResponse = await response.json()
+    // Changement ici - lecture directe du tableau retourné
+    const data = await response.json()
     
-    const stocks: GlobalStock[] = (data.GlobalStocks || []).map(stock => ({
+    const stocks: GlobalStock[] = data.map((stock: GlobalStockDTO) => ({
       ...stock,
       isCritical: stock.ReadyCount < stock.CriticalStock
     }))
