@@ -50,14 +50,18 @@ export async function createRequest(data: Omit<RequestDto, 'id'>): Promise<Reque
     DueDate: data.dueDate ? validateDate(data.dueDate.split('T')[0]) : null,
     MoreDetails: data.moreDetails,
     ServiceId: data.serviceId,
-    DonorId: data.donorId,
-    RequestStatus: data.status.toLowerCase(),
+    DonorId: null,
+    status: data.status.toLowerCase(),
     RequestDate: validateDate(data.requestDate.split('T')[0]),
     AquiredQty: data.aquiredQty,
     RequiredQty: data.requiredQty,
   };
-  console.log('Sending request data:', requestData); // Pour le débogage
-
+  
+  // Added detailed logging with formatting to easily inspect the request
+  console.log('Creating new blood request with data:');
+  console.log(JSON.stringify(requestData, null, 2));
+  console.table(requestData); // Shows data in table format for better readability
+  
   const response = await fetch(`${API_URL}/bloodrequests`, {
     method: 'POST',
     headers: {
@@ -68,8 +72,11 @@ export async function createRequest(data: Omit<RequestDto, 'id'>): Promise<Reque
   });
 
   if (!response.ok) await handleApiError(response);
-  const responseData= await response.json();
-  return responseData.content
+
+  const responseData = await response.json();
+  console.log('Backend response:', responseData); // Also log the response
+  
+  return responseData;
 }
 
 
@@ -165,7 +172,6 @@ export async function updateRequest(id: string, data: Partial<Omit<RequestDto, '
     },
     body: JSON.stringify(requestData),
   });
-
   if (!response.ok) await handleApiError(response);
 
   const responseData = await response.json();

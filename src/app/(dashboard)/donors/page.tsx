@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { format, parseISO } from 'date-fns'
-import { getAllDonors, createDonor, deleteDonor, updateDonor } from "@/lib/Donors"
+import { getAllDonors, createDonor, deleteDonor, updateDonor } from "@/lib/donors"
 // Importez d'abord le DatePicker de react-datepicker
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -218,6 +218,7 @@ const defaultValues = {
         setIsLoading(true);
         // Add filter parameters to the API call
         const response = await getAllDonors(pageIndex + 1, pageSize);
+        
         console.log("getAllDonors response:", response);
         const { donors, total } = response;
 
@@ -259,28 +260,46 @@ const defaultValues = {
   const handleSubmit = async (values: z.infer<typeof createDonorSchema>) => {
     try {
       const formattedValues = {
-        name: values.Name,                     // lowercase for API
-        email: values.Email,                   // lowercase for API
-        bloodType: values.BloodType,           // lowercase for API
+        name: values.Name,
+        email: values.Email,
+        bloodType: values.BloodType,
         lastDonationDate: values.LastDonationDate
           ? format(values.LastDonationDate, "yyyy-MM-dd")
           : "",
-        address: values.Address,               // lowercase for API
-        nin: values.NIN,                       // lowercase for API
-        phoneNumber: values.PhoneNumber,       // lowercase for API
+        address: values.Address,
+        nin: values.NIN,
+        phoneNumber: values.PhoneNumber,
         dateOfBirth: values.DateOfBirth
           ? format(values.DateOfBirth, "yyyy-MM-dd")
-          : "", // Empty string instead of undefined
-        notesBTC: values.NotesBTC || ""        // lowercase for API
-    };
+          : "",
+        notesBTC: values.NotesBTC || ""
+      };
 
       const response = await createDonor(formattedValues);
 
       if (response.success) {
-        console.log("Created donor ID:", response.content?.id); // Vérifiez l'ID ici
-        setDonors((prev) => [response.content!, ...prev]);
+        // Transformer le nouveau donneur
+        const newDonor: DonorDTO = {
+          id: response.content!.id,
+          Name: values.Name,
+          Email: values.Email,
+          BloodType: values.BloodType,
+          Address: values.Address,
+          NIN: values.NIN,
+          PhoneNumber: values.PhoneNumber,
+          DateOfBirth: values.DateOfBirth ? format(values.DateOfBirth, "yyyy-MM-dd") : "",
+          LastDonationDate: values.LastDonationDate ? format(values.LastDonationDate, "yyyy-MM-dd") : "",
+          NotesBTC: values.NotesBTC || ""
+        };
+        
+        setDonors((prev) => [newDonor, ...prev]);
         setTotalDonors((prev) => prev + 1);
         setOpen(false);
+        
+        toast({
+          title: "Success",
+          description: "Donor created successfully",
+        });
       } else {
         setError(response.Error || "Failed to create donor");
       }

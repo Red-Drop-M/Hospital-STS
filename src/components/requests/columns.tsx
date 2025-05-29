@@ -5,7 +5,7 @@ import { format } from "date-fns"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Trash, Edit } from "lucide-react";
-import { deleteRequest } from "@/lib/ReqAPI";
+import { deleteRequest } from "@/lib/reqAPI";
 import { toast } from "@/hooks/use-toast";
 
 export interface BloodRequest {

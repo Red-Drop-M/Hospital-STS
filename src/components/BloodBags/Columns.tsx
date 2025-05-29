@@ -5,14 +5,15 @@ import { toast } from "@/hooks/use-toast";
 import { deleteBloodBag } from "@/lib/BloodBagAPI";
 
 export interface BloodBagDTO {
-    id: string; // Guid est représenté par string en TypeScript
-    BloodBagType: 'blood' | 'plaquette' | 'plasma';
-    BloodType: 'A-' | 'A+' | 'B-' | 'B+' | 'AB-' | 'AB+' | 'O-' | 'O+';
-    BloodBagStatus?: "aquired" | "ready" | "expired" | "using" | "outforexpired" | "out of stock" | null; // équivalent à BloodBagStatus?
-    ExpirationDate?: string | null; // DateOnly représenté comme string (format ISO)
-    AcquiredDate?: string | null; // DateOnly représenté comme string (format ISO)
-    DonorId?: string | null; // Guid?
-    RequestId?: string | null; // Guid?
+  BloodType: any;
+  id: string;
+  BloodGroup: string;       // Uppercase first letter as expected by your code
+  BloodBagType: string;    // Uppercase first letter as expected by your code
+  BloodBagStatus: string;  // Uppercase first letter as expected by your code
+  ExpirationDate: string | null;
+  AcquiredDate: string | null;
+  DonorId: string;
+  RequestId: string | null;
 }
 
 import { ColumnDef } from "@tanstack/react-table";
@@ -34,7 +35,8 @@ const bloodTypeMap = {
 export const bloodBagColumns = (
   setBloodBags: React.Dispatch<React.SetStateAction<BloodBagDTO[]>>,
   setIsUpdateModalOpen: (open: boolean) => void,
-  setSelectedBloodBag: (bloodBag: BloodBagDTO | null) => void
+  setSelectedBloodBag: (bloodBag: BloodBagDTO | null) => void,
+  fetchGlobalStocks: () => void // Ajouter le paramètre ici
 ): ColumnDef<BloodBagDTO>[] => [
   {
     accessorKey: "id",
@@ -45,14 +47,21 @@ export const bloodBagColumns = (
     accessorKey: "BloodBagType",
     header: "BloodBagType",
     cell: ({ row }) => {
-      const value = row.getValue("BloodBagType") as BloodBagDTO["BloodBagType"];      const displayText = {
+      const value = row.getValue("BloodBagType");
+      // Extract the value if it's an object and cast to string
+      const displayValue = typeof value === 'object' && value !== null && 'value' in value 
+        ? (value as { value: string }).value 
+        : String(value);
+        
+      const displayText: Record<string, string> = {
         blood: "blood",
         plaquette: "plaquette",
         plasma: "plasma"
       };
+      
       return (
         <span className="font-medium text-gray-600">
-          {displayText[value] || value}
+          {displayText[displayValue as keyof typeof displayText] || displayValue}
         </span>
       );
     },
@@ -61,13 +70,18 @@ export const bloodBagColumns = (
     accessorKey: "BloodType",
     header: "BloodType",
     cell: ({ row }) => {
-      const bloodType = row.getValue("BloodType") as keyof typeof bloodTypeMap;
+      const bloodType = row.getValue("BloodType");
+      // Check if bloodType is an object with a value property
+      const displayValue = typeof bloodType === 'object' && bloodType !== null && 'value' in bloodType 
+        ? bloodType.value 
+        : bloodType;
+        
       return (
         <Badge className={cn(
-          bloodTypeMap[bloodType],
+          bloodTypeMap[displayValue as keyof typeof bloodTypeMap] || "",
           "font-bold min-w-[60px] justify-center"
         )}>
-          {bloodType || "N/A"}
+          {displayValue ? (typeof displayValue === 'object' ? 'N/A' : String(displayValue)) : "N/A"}
         </Badge>
       );
     },
@@ -76,8 +90,18 @@ export const bloodBagColumns = (
     accessorKey: "BloodBagStatus",
     header: "BloodBagStatus",
     cell: (info) => {
-      const status = info.getValue() as BloodBagDTO["BloodBagStatus"];
-      if (!status) return <span className="text-gray-500">Undefined</span>;      const statusConfig = {
+      // Extract the value if it's an object
+      let status = info.getValue();
+      
+      // Handle case where status is an object with a value property
+      if (status && typeof status === 'object' && 'value' in status) {
+        status = (status as { value: string }).value;
+      }
+      
+      if (!status) return <span className="text-gray-500">Undefined</span>;      
+      type StatusType = 'aquired' | 'ready' | 'expired' | 'using' | 'outforexpired' | 'out of stock';
+      
+      const statusConfig = {
         aquired: {
           style: "bg-blue-100 text-blue-800 border-blue-200",
           text: "aquired"
@@ -104,7 +128,7 @@ export const bloodBagColumns = (
         }
       };
 
-      const config = statusConfig[status] || {
+      const config = statusConfig[status as StatusType] || {
         style: "bg-gray-100 text-gray-800 border-gray-200",
         text: status
       };      return (
@@ -112,7 +136,7 @@ export const bloodBagColumns = (
           config.style,
           "font-semibold min-w-[100px] justify-center"
         )}>
-          {config.text}
+          {typeof config.text === 'object' ? 'N/A' : config.text}
         </Badge>
       );
     },
@@ -172,11 +196,13 @@ export const bloodBagColumns = (
     cell: ({ row }) => {
       const bloodBag = row.original;
 
-      const handleDelete = async (id: string) => {        if (confirm("Are you sure you want to delete this blood bag?")) {
+      const handleDelete = async (id: string) => {
+        if (confirm("Are you sure you want to delete this blood bag?")) {
           try {
             const response = await deleteBloodBag(id);
             if (!response.error) {
               setBloodBags(prev => prev.filter(bag => bag.id !== id));
+              fetchGlobalStocks(); // Utiliser la fonction passée en paramètre
               toast({
                 title: "Success",
                 description: "Blood bag successfully deleted",
@@ -184,7 +210,8 @@ export const bloodBagColumns = (
             } else {
               throw new Error(response.error);
             }
-          } catch (error) {            console.error("Error deleting blood bag:", error);
+          } catch (error) {
+            console.error("Error deleting blood bag:", error);
             toast({
               title: "Error",
               description: "Failed to delete blood bag",
@@ -193,7 +220,7 @@ export const bloodBagColumns = (
           }
         }
       };
-
+      
       const handleUpdate = () => {
         setSelectedBloodBag(bloodBag);
         setIsUpdateModalOpen(true);

@@ -1,6 +1,6 @@
 import { DonorPledgeDTO } from "@/components/DonorPledges/Columns";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 // Types pour les réponses API
 type ApiResponse<T> = {
@@ -21,24 +21,39 @@ export async function getAllDonorPledges(params?: {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('_page', params.page.toString());
     if (params?.pageSize) queryParams.append('_limit', params.pageSize.toString());
-    if (params?.bloodType) queryParams.append('BloodType', params.bloodType);
-    if (params?.status) queryParams.append('Status', params.status);
+    if (params?.bloodType) queryParams.append('bloodType', params.bloodType);
+    if (params?.status) queryParams.append('status', params.status);
     if (params?.searchQuery) {
       queryParams.append('q', params.searchQuery);
     }
 
-    const response = await fetch(`${API_URL}/donor-pledges?${queryParams}`);
+    // Fix the URL to match your actual endpoint
+    const response = await fetch(`${API_URL}/donors-pledges?${queryParams}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch donor pledges');
     }
 
-    const total = parseInt(response.headers.get('X-Total-Count') || '0');
-    const donorPledges = await response.json();
+    const responseData = await response.json();
+    console.log("API response:", responseData);
+    
+    // Transform the data to match your expected format
+    const donorPledges = responseData.pledges?.map((pledge: any) => ({
+      Id: pledge.id || pledge.donorId, // Ensure there's always an Id
+      DonorId: pledge.donorId,
+      DonorName: pledge.donorName,
+      RequestId: pledge.requestId,
+      BloodType: pledge.bloodType,
+      PledgeDate: pledge.pledgeDate,
+      // Make sure status is never undefined
+      Status: pledge.status ? pledge.status.toLowerCase() : "pending"
+    })) || [];
+    
+    const total = responseData.total || 0;
 
     return {
       data: { donorPledges, total },
-      statusCode: response.status
+      statusCode: responseData.statusCode || 200
     };
   } catch (error) {
     console.error('Error fetching donor pledges:', error);

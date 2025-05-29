@@ -22,13 +22,19 @@ export async function getAllBloodBags(params?: {
 }): Promise<ApiResponse<{ bloodBags: BloodBagDTO[]; total: number }>> {
   try {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append('_page', params.page.toString());
-    if (params?.pageSize) queryParams.append('_limit', params.pageSize.toString());
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.pageSize) queryParams.append('limit', params.pageSize.toString());
     if (params?.bloodType) queryParams.append('BloodType', params.bloodType);
     if (params?.bloodBagType) queryParams.append('BloodBagType', params.bloodBagType);
     if (params?.status) queryParams.append('BloodBagStatus', params.status);
 
-    const response = await fetch(`${API_URL}/blood-bags?${queryParams}`);
+    queryParams.append('_t', Date.now().toString());
+    
+    const url = `http://localhost:5000/blood-bags?${queryParams}`;
+    console.log(`[API] Fetching URL: ${url}`);
+    
+    const response = await fetch(url);
+    console.log(`[API] Response status: ${response.status}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch blood bags');
@@ -41,8 +47,12 @@ export async function getAllBloodBags(params?: {
       data: { bloodBags, total },
       statusCode: response.status
     };
-  } catch (error) {
-    console.error('Error fetching blood bags:', error);
+  } catch (error:any) {
+      console.error("Error details:", {
+    message: error.message,
+    stack: error.stack,
+    cause: error.cause
+  });
     return {
       error: 'Failed to fetch blood bags',
       statusCode: 500
@@ -50,40 +60,80 @@ export async function getAllBloodBags(params?: {
   }
 }
 
-// Create Blood Bag
-export const createBloodBag = async (bloodBag: BloodBagDTO) => {
-    try {
-        const response = await fetch(`${API_URL}/blood-bags`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(bloodBag),
-        });
+// Create Blood Bag - update the function to match the expected format
+export async function createBloodBag(bloodBag: Omit<BloodBagDTO, 'id'>): Promise<ApiResponse<BloodBagDTO>> {
+  try {
+    // Debug du problème
+    console.log("Dans createBloodBag, bloodBag reçu:", bloodBag);
+    
+    // Création d'un nouvel objet avec les bonnes propriétés
+    const requestData = {
+      BloodType: bloodBag.BloodType,
+      BloodBagType: bloodBag.BloodBagType,
+      // Utiliser explicitement Status de bloodBag
+      Status: bloodBag.Status || bloodBag.BloodBagStatus, // Fallback à BloodBagStatus si Status est undefined
+      ExpirationDate: bloodBag.ExpirationDate,
+      AcquiredDate: bloodBag.AcquiredDate,
+      DonorId: bloodBag.DonorId,
+      RequestId: bloodBag.RequestId
+    };
+    
+    console.log("Creating new blood bag with data:", requestData);
+    
+    const response = await fetch(`http://localhost:5000/blood-bags`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData),
+    });
 
-        if (!response.ok) {
-            throw new Error('Failed to create blood bag');
-        }
-
-        const data = await response.json();
-        return { data, error: null };
-    } catch (error) {
-        return {
-            data: null,
-            error: error instanceof Error ? error.message : 'An error occurred',
-        };
+    if (!response.ok) {
+      throw new Error('Failed to create blood bag');
     }
+
+    const data = await response.json();
+    return { data, error: undefined, statusCode: response.status };
+  } catch (error:any) {
+    console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        cause: error.cause
+    });
+    return {
+        data: undefined,
+        error: error instanceof Error ? error.message : 'An error occurred',
+        statusCode: 500
+    };
+  }
 };
 
 // Update Blood Bag
 export async function updateBloodBag(
   id: string,
-  data: Partial<Omit<BloodBagDTO, 'id'>>
+  data: {
+    Id: string;
+    BloodType?: string;
+    BloodBagType?: string;
+    Status?: string; 
+    ExpirationDate?: string | null;
+    AcquiredDate?: string | null;
+    DonorId?: string;
+    RequestId?: string | null;
+  }
 ): Promise<ApiResponse<BloodBagDTO>> {
   try {
-    // Correction du chemin de l'endpoint (blood-bags au lieu de bloodbags)
-    const response = await fetch(`${API_URL}/blood-bags/${id}`, {
-      method: 'PATCH', // Utilisation de PATCH au lieu de PUT
+    // Fix: Ensure AcquiredDate has a value and isn't null
+    if (!data.AcquiredDate) {
+      // Set a default acquired date if none is provided
+      data.AcquiredDate = new Date().toISOString().split('T')[0];
+      console.log("Setting default AcquiredDate:", data.AcquiredDate);
+    }
+    
+    console.log(`Updating blood bag ${id} with:`, data);
+    
+    const response = await fetch(`http://localhost:5000/blood-bags/${id}`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -99,8 +149,12 @@ export async function updateBloodBag(
       data: bloodBag,
       statusCode: response.status
     };
-  } catch (error) {
-    console.error('Error updating blood bag:', error);
+  } catch (error:any) {
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause
+    });
     return {
       error: 'Failed to update blood bag',
       statusCode: 500
@@ -112,13 +166,14 @@ export async function updateBloodBag(
 export async function deleteBloodBag(id: string): Promise<ApiResponse<void>> {
   try {
     // Correction du chemin de l'endpoint (blood-bags au lieu de bloodbags)
-    const response = await fetch(`${API_URL}/blood-bags/${id}`, {
+    const response = await fetch(`http://localhost:5000/blood-bags/${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-      }
+      },
+      body: JSON.stringify({ id }), // Ensure the body is correctly formatted
     });
-
+    console.log(`Deleting blood bag with ID: ${id}`);
     if (!response.ok) {
       throw new Error('Failed to delete blood bag');
     }
@@ -140,7 +195,7 @@ export async function deleteBloodBag(id: string): Promise<ApiResponse<void>> {
 export async function getBloodBag(id: string): Promise<ApiResponse<BloodBagDTO>> {
   try {
     // Correction du chemin de l'endpoint (blood-bags au lieu de bloodbags)
-    const response = await fetch(`${API_URL}/blood-bags/${id}`);
+    const response = await fetch(`http://localhost:5000/blood-bags/${id}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch blood bag');

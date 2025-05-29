@@ -1,13 +1,15 @@
-
 export interface BloodBagDTO {
-    id: string; // Guid est représenté par string en TypeScript
+    id: string; // Should be Guid in C#, string in TypeScript
     BloodBagType: 'blood' | 'plaquette' | 'plasma';
     BloodType: 'A-' | 'A+' | 'B-' | 'B+' | 'AB-' | 'AB+' | 'O-' | 'O+';
-    BloodBagStatus?: "aquired" | "ready" | "expired" | "using" | "outforexpired" | "out of stock" | null; // équivalent à BloodBagStatus?
-    ExpirationDate?: string | null; // DateOnly représenté comme string (format ISO)
-    AcquiredDate?: string | null; // DateOnly représenté comme string (format ISO)
-    DonorId?: string | null; // Guid?
-    RequestId?: string | null; // Guid?
+    BloodBagStatus?: "aquired" | "ready" | "expired" | "using" | "outforexpired" | "out of stock" | null;
+    // Notice we keep BloodBagStatus in our DTO for internal use,
+    // but map it to Status when sending to the API
+    Status?: string; // Ajoutez cette ligne
+    ExpirationDate?: string | null; // DateOnly formatted as YYYY-MM-DD
+    AcquiredDate?: string | null; // DateOnly formatted as YYYY-MM-DD
+    DonorId?: string | null; 
+    RequestId?: string | null; 
 }
 // Helper pour générer des dates aléatoires dans une plage
 const randomDate = (start: Date, end: Date): string => {

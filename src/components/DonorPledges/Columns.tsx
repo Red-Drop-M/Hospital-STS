@@ -9,12 +9,15 @@ import { Edit } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface DonorPledgeDTO {
+  Id?: string;
   DonorId: string
   DonorName: string
-  RequestId: string
-  BloodType: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-'
+  RequestId?: string | null
+  BloodType: string
   PledgeDate: string
-  Status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  Status: string // Make sure this is defined as required
+  DonorContact?: string
+  CreatedAt?: string
 }
 
 const bloodTypeMap = {
@@ -107,8 +110,16 @@ export const donorPledgeColumns = (
     accessorKey: "Status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.getValue("Status") as keyof typeof statusConfig;
-      const config = statusConfig[status];
+      const status = row.getValue("Status") as string;
+      
+      // Create a safe fallback in case status is undefined
+      if (!status) return <span className="text-gray-500">Unknown</span>;
+      
+      // Safely access the status config
+      const config = statusConfig[status.toLowerCase() as keyof typeof statusConfig] || {
+        style: "bg-gray-100 text-gray-800 border-gray-200",
+        text: status
+      };
       
       return (
         <Badge className={cn(
@@ -120,7 +131,9 @@ export const donorPledgeColumns = (
       );
     },
     filterFn: (row, id, value) => {
-      return value.length === 0 || value.includes(row.getValue(id))
+      if (!Array.isArray(value) || value.length === 0) return true;
+      const status = (row.getValue(id) as string || "").toLowerCase();
+      return value.includes(status);
     },
   },
   {
