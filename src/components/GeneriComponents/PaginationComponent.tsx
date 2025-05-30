@@ -17,6 +17,11 @@ interface PaginationComponentProps {
 }
 
 export default function PaginationComponent({ pageCount, pageIndex, onPageChange }: PaginationComponentProps) {
+  // Ne rien afficher si une seule page ou moins
+  if (pageCount <= 1) {
+    return null
+  }
+
   // Generate page numbers to display
   const getPageNumbers = () => {
     const pages = []

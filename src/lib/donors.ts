@@ -1,7 +1,7 @@
 // src/api/donors.ts
 import { DonorDTO } from "@/components/Donors/columns";
 
-const API_URL = "http://localhost:5000/donors"; // JSON Server
+const API_URL = "http://192.168.1.245:5000/donors"; // JSON Server
 // const API_URL = "http://localhost:5000/donors"; // Pour votre backend réel
 
 // Interface pour la réponse du backend réel
@@ -15,7 +15,7 @@ interface BackendResponse<T> {
 
 export const getAllDonors = async (page: number = 1, pageSize: number = 10): Promise<{ donors: DonorDTO[], total: number }> => {
   try {
-    const response = await fetch(`http://localhost:5000/donors?Page=${page}&PageSize=${pageSize}`);
+    const response = await fetch(`http://192.168.1.245:5000/donors?Page=${page}&PageSize=${pageSize}`);
     if (!response.ok) throw new Error('Failed to fetch donors');
 
     const data = await response.json();
@@ -84,7 +84,7 @@ export const updateDonor = async (
   try {
     const url = `${API_URL}/${id}`;
     console.log("PUT request URL:", url); // Vérifiez l'URL ici
-
+    
     const response = await fetch(url, {
       method: "PUT",
       headers: {

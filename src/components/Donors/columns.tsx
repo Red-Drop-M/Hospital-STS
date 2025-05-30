@@ -5,7 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { deleteDonor } from "@/lib/donors";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Trash, Edit } from "lucide-react";
+import { Trash, Edit, Copy } from "lucide-react";
 import { format } from "date-fns";
 
 // Define DonorDTO here to avoid circular import
@@ -120,18 +120,34 @@ export const DonorColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
-          onClick={() => {
-            console.log("Donor object:", donor); // Vérifiez l'objet ici
-            setSelectedDonor(donor);
-            setIsUpdateModalOpen(true); // Ouvre la boîte de dialogue
-          }}
-        >
-          <Edit className="mr-2 h-4 w-4" />
-          Update
-        </DropdownMenuItem>
-            <DropdownMenuItem
               onClick={() => {
                 console.log("Donor object:", donor); // Vérifiez l'objet ici
+                setSelectedDonor(donor);
+                setIsUpdateModalOpen(true); // Ouvre la boîte de dialogue
+              }}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Update
+            </DropdownMenuItem>
+            
+            {/* Add the new Copy ID option here */}
+            <DropdownMenuItem
+              onClick={() => {
+                navigator.clipboard.writeText(donor.id);
+                toast({
+                  title: "ID Copied",
+                  description: "Donor ID copied to clipboard",
+                  duration: 2000,
+                });
+              }}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              Copy ID
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem
+              onClick={() => {
+                console.log("Donor object:", donor);
                 handleDelete(donor.id);
               }}
               className="text-red-600"

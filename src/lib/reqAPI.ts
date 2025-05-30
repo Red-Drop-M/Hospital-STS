@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://192.168.1.245:5000';
 
 // Types d'énumération stricts
 export type Priority = 'critical' | 'standard' | 'low';
@@ -43,26 +43,40 @@ function validateDate(dateStr: string): string {
 }
 
 export async function createRequest(data: Omit<RequestDto, 'id'>): Promise<RequestDto> {
+  // Vérifier les champs obligatoires
+  if (!data.bloodType || !data.bloodBagType || !data.priority || !data.requestDate) {
+    throw new Error("Les champs bloodType, bloodBagType, priority et requestDate sont obligatoires");
+  }
+
+  // Normaliser les dates
+  const formatDate = (dateStr: string | undefined): string | null => {
+    if (!dateStr) return null;
+    // Extraire la partie YYYY-MM-DD de la date
+    const dateMatch = dateStr.match(/^\d{4}-\d{2}-\d{2}/);
+    if (dateMatch) {
+      return dateMatch[0]; // Retourner juste YYYY-MM-DD
+    }
+    return null;
+  };
+
+  // Créer l'objet de données avec les bons noms de champs et formats
   const requestData = {
-    BloodType: data.bloodType,
-    BloodBagType: data.bloodBagType.toLowerCase(),
-    Priority: data.priority.toLowerCase(),
-    DueDate: data.dueDate ? validateDate(data.dueDate.split('T')[0]) : null,
-    MoreDetails: data.moreDetails,
-    ServiceId: data.serviceId,
-    DonorId: null,
-    status: data.status.toLowerCase(),
-    RequestDate: validateDate(data.requestDate.split('T')[0]),
-    AquiredQty: data.aquiredQty,
-    RequiredQty: data.requiredQty,
+    bloodType: data.bloodType,
+    bloodBagType: data.bloodBagType.toLowerCase(),
+    priority: data.priority.toLowerCase(),
+    status: data.status?.toLowerCase() || "pending",
+    requestDate: formatDate(data.requestDate),
+    dueDate: formatDate(data.dueDate),
+    requiredQty: data.requiredQty || 1,
+    aquiredQty: data.aquiredQty || 0,
+    moreDetails: data.moreDetails || "",
+    serviceId: data.serviceId || null,
+    donorId: data.donorId || null
   };
   
-  // Added detailed logging with formatting to easily inspect the request
-  console.log('Creating new blood request with data:');
-  console.log(JSON.stringify(requestData, null, 2));
-  console.table(requestData); // Shows data in table format for better readability
+  console.log('Création d\'une nouvelle demande avec données:', requestData);
   
-  const response = await fetch(`${API_URL}/bloodrequests`, {
+  const response = await fetch(`http://192.168.1.245:5000/bloodrequests`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -70,19 +84,29 @@ export async function createRequest(data: Omit<RequestDto, 'id'>): Promise<Reque
     },
     body: JSON.stringify(requestData),
   });
-
-  if (!response.ok) await handleApiError(response);
+  
+  // Capturer et afficher l'erreur complète du serveur
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Réponse d'erreur du serveur:", errorText);
+    try {
+      const errorJson = JSON.parse(errorText);
+      throw new Error(errorJson.message || errorJson.error || `Erreur ${response.status}`);
+    } catch (e) {
+      throw new Error(`Erreur ${response.status}: ${errorText}`);
+    }
+  }
 
   const responseData = await response.json();
-  console.log('Backend response:', responseData); // Also log the response
+  console.log('Réponse du backend:', responseData);
   
   return responseData;
 }
 
 
 interface GetRequestsParams {
-  Page?: number;
-  PageSize?: number;
+  page?: number;
+  pageSize?: number;
   Priority?: Priority;
   BloodBagType?: BloodBagType;
   RequestDate?: string;
@@ -94,14 +118,13 @@ interface GetRequestsParams {
 }
 export async function getRequests(params: GetRequestsParams = {}): Promise<{ requests: RequestDto[]; total: number }> {
   const query = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined) query.append(key, value.toString());
-  });
 
-  const response = await fetch(`http://localhost:5000/bloodrequests?${query}`, {
+
+  const response = await fetch(`http://192.168.1.245:5000/bloodrequests?${query}`, {
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-    }
+    },
+    
   });
 
   if (!response.ok) await handleApiError(response);
@@ -114,7 +137,7 @@ export async function getRequests(params: GetRequestsParams = {}): Promise<{ req
 }
 
 export async function deleteRequest(id: string): Promise<{ message: string; statusCode: number }> {
-  const response = await fetch(`http://localhost:5000/bloodrequests/${id}`, {
+  const response = await fetch(`http://192.168.1.245:5000/bloodrequests/${id}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -164,7 +187,7 @@ export async function updateRequest(id: string, data: Partial<Omit<RequestDto, '
 
   console.log('Sending update data:', requestData); // Pour le débogage
 
-  const response = await fetch(`http://localhost:5000/bloodrequests/${id}`, {
+  const response = await fetch(`http://192.168.1.245:5000/bloodrequests/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

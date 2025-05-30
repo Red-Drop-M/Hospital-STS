@@ -17,18 +17,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
-import {
   Card,
   CardContent,
   CardDescription,
@@ -120,7 +108,7 @@ import type { FormFieldType } from "@/components/GeneriComponents/GenericForm";
 
 export const formFields: FormFieldType[] = [
   {
-    name: "BloodType", // Changed from BloodGroup to BloodType
+    name: "BloodType", 
     label: "Blood Type",
     type: "select",
     required: true,
@@ -205,8 +193,8 @@ export default function Stock() {
 
   // Constants
   const pageSize = 10;
-  const allData = mockBloodBags;
-  const pageCount = Math.ceil(allData.length / pageSize);
+
+  const pageCount = Math.ceil(length / pageSize);
   // const bloodStocks = [ 
   //     {type:"A+" , stock:78 , critical:20},
   //     {type:"A-" , stock:62 , critical:23},
@@ -632,7 +620,7 @@ export default function Stock() {
                                   let statusColor = "bg-red-500"; // Par défaut rouge
                                   let statusText = "Critical";
                                   
-                                  if (stock.readyCount > stock.MinStock+10) {
+                                  if (stock.readyCount > stock.MinStock) {
                                       statusColor = "bg-green-500";
                                       statusText = "Good";
                                   } else if (stock.readyCount >= stock.MinStock) {

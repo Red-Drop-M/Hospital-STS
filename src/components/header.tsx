@@ -8,95 +8,124 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-  } from "@/components/ui/dropdown-menu"
-import {Droplet, Bell, ShieldUser, User} from "lucide-react"
-import { usePathname } from "next/navigation"
+} from "@/components/ui/dropdown-menu"
+import { Droplet, Bell, ShieldUser, User, Settings, LogOut, Users, Boxes } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { getCurrentUser, logoutUser } from "@/lib/authAPI"
 
-export default function  Header () {
+export default function Header() {
+    // Remplacer useAuth par des états locaux et appel direct à l'API
+    const [user, setUser] = useState<{ id: string; name: string; email: string; role: string } | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     
-    // const [userNotifications, setUserNotifications] = useState<string>();// type of notification
-    // const markAllAsRead = () => {
-    //     setUserNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })))
-    //     setUnreadCount(0)
-    //}
-
     const pathname = usePathname()
+    const router = useRouter();
+
+    // Charger les données utilisateur au montage du composant
+    useEffect(() => {
+        async function fetchUser() {
+            try {
+                setIsLoading(true);
+                const userData = await getCurrentUser();
+                
+                if (userData.success && userData.isAuthenticated) {
+                    setUser({
+                        id: userData.id,
+                        name: userData.name,
+                        email: userData.email,
+                        role: userData.role
+                    });
+                    
+                    // Ajouter les logs demandés pour afficher l'utilisateur et son rôle
+                    console.log('====== UTILISATEUR CONNECTÉ ======');
+                    console.log('Utilisateur:', userData.name);
+                    console.log('Email:', userData.email);
+                    console.log('Rôle:', userData.role);
+                    console.log('================================');
+                    
+                    setIsAuthenticated(true);
+                } else {
+                    setUser(null);
+                    setIsAuthenticated(false);
+                }
+            } catch (error) {
+                console.error('Failed to get current user:', error);
+                setUser(null);
+                setIsAuthenticated(false);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        
+        fetchUser();
+    }, []);
+
     const isActive = (path: string) => {
         return pathname === path
-      }
+    }
 
-    const navLinks = [
-        {name : "Overview ", path: "/overview"},
-        {name : "Requests ", path: "/requests"},
-        {name : "Donors ", path: "/donors"},
-        {name : "Stock ", path: "/stock"},
-        {name : "DonorPledges ", path: "/donorpledges"},
-    ]
+    // Liens de navigation standard pour tous les utilisateurs
+    const standardNavLinks = [
+        { name: "Overview", path: "/overview" },
+        { name: "Requests", path: "/requests" },
+        { name: "Donors", path: "/donors" },
+        { name: "Stock", path: "/stock" },
+        { name: "DonorPledges", path: "/donorpledges" },
+    ];
+
+    // Liens de navigation pour les administrateurs uniquement
+    const adminNavLinks = [
+        { name: "Services", path: "/services", icon: <Boxes className="h-4 w-4 mr-2" /> },
+        { name: "Users", path: "/users", icon: <Users className="h-4 w-4 mr-2" /> },
+        { name: "Admin", path: "/admins", icon: <ShieldUser className="h-4 w-4 mr-2" /> },
+    ];
+
+    const handleLogout = async () => {
+        try {
+            const response = await logoutUser();
+            console.log('Logout response:', response);
+            
+            // Nettoyer l'état local
+            setUser(null);
+            setIsAuthenticated(false);
+            
+            // Rediriger vers la page de login
+            router.push('/');
+        } catch (error) {
+            console.error('Logout failed:', error);
+            router.push('/');
+        }
+    };
 
     return (
         <>
-            {/* logo section  */}
-            <div className="flex gap-2 items-center p-2">
-                <Droplet className="text-white bg-red-900 p-1 h-8 w-8 rounded-full  "/>
-                <span className="text-xl font-semibold tracking-tight"> Red Drop </span>
-            </div>
-            {/* nav bar  */}
-            <nav className="hidden md:flex items-center gap-1">
-                {navLinks.map((link) => (
-                <Link href={link.path} key={link.path} className="h-full">
-                    <Button
-                    variant="ghost"
-                    className={`relative px-4 h-full ${
-                        isActive(link.path)
-                        ? "bg-[hsla(var(--hover),0.1)] font-medium border-b-2 border-[hsl(var(--hover))] rounded-none"
-                        : "hover:bg-[hsla(var(--hover),0.05)]"
-                    }`}
-                    >
-                    {link.name}
-                    </Button>
+            <div className="flex gap-6 md:gap-10">
+                <Link href="/" className="flex items-center space-x-2">
+                    <Droplet className="h-6 w-6 text-red-500" />
+                    <span className="inline-block font-bold">RED-DROP</span>
                 </Link>
-                ))}
-            </nav>
+                <nav className="flex gap-6">
+                    {standardNavLinks.map((link) => (
+                        <Link
+                            key={link.path}
+                            href={link.path}
+                            className={`flex items-center text-sm font-medium ${isActive(link.path) ? 'text-foreground' : 'text-foreground/60'
+                                } transition-colors hover:text-foreground/80`}
+                        >
+                            {link.name}
+                        </Link>
+                    ))}
+                </nav>
+            </div>
 
-            {/* settings */}
-            <div className="flex justify-end items-center gap-4 pr-2"> 
-                
-                {/* Notifications */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon" className="relative  hover:bg-red-300">
-                            <Bell className="h-5 w-5" />
-                            <span className="sr-only">Notifications</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[380px]">
-                        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                    </DropdownMenuContent>
-                </DropdownMenu>
+            <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" className='hover:bg-red-300'>
+                    <Bell className="h-5 w-5" />
+                    <span className="sr-only">Notifications</span>
+                </Button>
 
-                {/* Admin */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon" className="focus:outline-none focus:ring-0 border-2 border-transparent hover:border-red-300 transition-colors duration-300">
-                            <ShieldUser className="h-5 w-5" />
-                            <span className="sr-only">Menu utilisateur</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                            <Link href="/services">Services</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link href="/users">Users</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link href="/admins">Admin</Link>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-
-                {/* Profile */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="icon" className='hover:bg-red-300'>
@@ -105,20 +134,42 @@ export default function  Header () {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                            <Link href="/account">Profil</Link>
+                        <DropdownMenuLabel>
+                            
+                            {user?.name || 'Mon compte'}
+                           
+                            {user?.role && <span className="block text-xs text-muted-foreground">{user.role}</span>}
+                            
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        
+                        
+                        
+                        {/* Options Admin uniquement */}
+                        {user?.role === 'Admin' && (
+                            <>
+                                <DropdownMenuSeparator />
+                                {adminNavLinks.map((link) => (
+                                    <DropdownMenuItem key={link.path} asChild>
+                                        <Link href={link.path} className="flex items-center">
+                                            {link.icon}
+                                            {link.name}
+                                        </Link>
+                                    </DropdownMenuItem>
+                                ))}
+                            </>
+                        )}
+                        
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleLogout} className="flex items-center text-red-500">
+                            <LogOut className="h-4 w-4 mr-2" />
+                            Déconnexion
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link href="/settings">Parametres</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>Deconnexion</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-            
             </div>
         </>
     )
-
 }
 
 

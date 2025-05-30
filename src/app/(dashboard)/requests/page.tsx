@@ -165,15 +165,15 @@ export default function Requests() {
         });
 
         const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
-        const url = `http://localhost:5000/bloodrequests?${query}`;
+        const url = `http://192.168.1.235:5000/bloodrequests?${query}`;
         console.log("Fetching from URL:", url);
 
         const response = await fetch(url, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
+            // Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
           },
         });
-
+        
         if (!response.ok) {
           console.error("Fetch failed with status:", response.status);
           throw new Error(`HTTP ${response.status}`);

@@ -1,19 +1,39 @@
 // src/types/auth.ts
-export interface User {
+export interface AuthUser {
   id: string;
   name: string;
   email: string;
   role: string;
 }
 
-export interface AuthResponse {
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
   token: string;
-  user: User;
+  user: AuthUser;
   success: boolean;
 }
 
-export interface CurrentUserResponse extends User {
+export interface GetCurrentUserResponse {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
   isAuthenticated: boolean;
   success: boolean;
-  error?: string | null;
+  error?: string;
+}
+
+export interface LogoutResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+  success: boolean;
 }
