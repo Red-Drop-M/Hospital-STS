@@ -79,7 +79,7 @@ export default function Header() {
     const adminNavLinks = [
         { name: "Services", path: "/services", icon: <Boxes className="h-4 w-4 mr-2" /> },
         { name: "Users", path: "/users", icon: <Users className="h-4 w-4 mr-2" /> },
-        { name: "Admin", path: "/admins", icon: <ShieldUser className="h-4 w-4 mr-2" /> },
+        // { name: "Admin", path: "/admins", icon: <ShieldUser className="h-4 w-4 mr-2" /> },
     ];
 
     const handleLogout = async () => {
