@@ -19,7 +19,14 @@ export interface GlobalStock extends GlobalStockDTO {
 
 // Configuration partagée
 const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true"
-const API_BASE_URL = "http://localhost:3001"
+const API_BASE_URL = 'https://localhost:57677';
+
+// Update all hardcoded URLs:
+// From: const url = new URL(`http://192.168.1.245:5000/global-stocks`);
+// To: const url = new URL(`${API_BASE_URL}/global-stocks`);
+
+// From: const response = await fetch(`http://192.168.1.245:5000/global-stocks`...
+// To: const response = await fetch(`${API_BASE_URL}/global-stocks`...
 
 export type ApiResponse<T> = {
   data?: T
@@ -48,7 +55,7 @@ export async function getAllGlobalStocks(
 ): Promise<ApiResponse<GlobalStock[]>> {
   try {
     // Build the URL with query parameters
-    const url = new URL(`http://192.168.1.245:5000/global-stocks`);
+    const url = new URL(`${API_BASE_URL}/global-stocks`);
     if (bloodType) url.searchParams.append("bloodType", bloodType);
     if (bloodBagType) url.searchParams.append("bloodBagType", bloodBagType);
     if (critical !== undefined) url.searchParams.append("critical", String(critical));
@@ -193,7 +200,7 @@ export async function createGlobalStock(
   stockData: Omit<GlobalStock, "isCritical">
 ): Promise<ApiResponse<GlobalStock>> {
   try {
-    const response = await fetch(`http://192.168.1.245:5000/global-stocks`, {
+    const response = await fetch(`${API_BASE_URL}/global-stocks`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -242,7 +249,7 @@ export async function updateGlobalStock(
   updateData: Partial<Omit<GlobalStock, "bloodType" | "bloodBagType">>
 ): Promise<ApiResponse<GlobalStock>> {
   try {
-    const response = await fetch(`http://192.168.1.245:5000/global-stocks`, {
+    const response = await fetch(`${API_BASE_URL}/global-stocks`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

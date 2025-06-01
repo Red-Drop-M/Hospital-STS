@@ -1,4 +1,4 @@
-const API_URL = 'http://192.168.1.245:5000';
+const API_URL = 'https://localhost:57677';
 
 // Types d'énumération stricts
 export type Priority = 'critical' | 'standard' | 'low';
@@ -76,7 +76,7 @@ export async function createRequest(data: Omit<RequestDto, 'id'>): Promise<Reque
   
   console.log('Création d\'une nouvelle demande avec données:', requestData);
   
-  const response = await fetch(`http://192.168.1.245:5000/bloodrequests`, {
+  const response = await fetch(`https://localhost:57677/bloodrequests`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ export async function getRequests(params: GetRequestsParams = {}): Promise<{ req
   const query = new URLSearchParams();
 
 
-  const response = await fetch(`http://192.168.1.245:5000/bloodrequests?${query}`, {
+  const response = await fetch(`${API_URL}/bloodrequests?${query}`, {
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('authToken')}`
     },
@@ -137,7 +137,7 @@ export async function getRequests(params: GetRequestsParams = {}): Promise<{ req
 }
 
 export async function deleteRequest(id: string): Promise<{ message: string; statusCode: number }> {
-  const response = await fetch(`http://192.168.1.245:5000/bloodrequests/${id}`, {
+  const response = await fetch(`${API_URL}/bloodrequests/${id}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -187,7 +187,7 @@ export async function updateRequest(id: string, data: Partial<Omit<RequestDto, '
 
   console.log('Sending update data:', requestData); // Pour le débogage
 
-  const response = await fetch(`http://192.168.1.245:5000/bloodrequests/${id}`, {
+  const response = await fetch(`${API_URL}/bloodrequests/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

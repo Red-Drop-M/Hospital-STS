@@ -165,7 +165,7 @@ export default function Requests() {
         });
 
         const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
-        const url = `http://192.168.1.235:5000/bloodrequests?${query}`;
+        const url = `https://localhost:57677/bloodrequests?${query}`;
         console.log("Fetching from URL:", url);
 
         const response = await fetch(url, {
@@ -220,25 +220,7 @@ export default function Requests() {
   try {
     setSubmitLoading(true);
 
-    // const requestData = {
-
-    //   bloodType: values.bloodType as BloodType,
-    //   bloodBagType: values.bloodBagType as BloodBagType,
-    //   priority: values.priority,
-    //   status: values.status || "pending",
-    //   requestStatus: values.status || "pending",
-    //   requestDate: values.requestDate.toISOString(),
-    //   dueDate: values.dueDate?.toISOString() || null,
-    //   requiredQty: values.requiredQty,
-    //   aquiredQty: values.aquiredQty || 0,
-    //   moreDetails: values.moreDetails || "",
-    //   serviceId: values.serviceId || "",
-    //   donorId: values.donorId || "",
-    // };
-
-    // const newRequest = await createRequest(requestData);
     const requestData = {
-
       bloodType: values.bloodType as BloodType,
       bloodBagType: values.bloodBagType as BloodBagType,
       priority: values.priority,
@@ -252,11 +234,27 @@ export default function Requests() {
       serviceId: values.serviceId || "",
       donorId: values.donorId || "",
     };
-    console.log("Sending request data:", requestData); // Pour le débogage
+    console.log("Sending request data:", requestData);
 
-    const newRequest = await createRequest(requestData);
+    const apiResponse = await createRequest(requestData);
+    
+    // Create a properly formatted new request object that matches our UI expectations
+    const newRequest: Request = {
+      id: apiResponse.id,
+      bloodType: values.bloodType,
+      bloodBagType: values.bloodBagType,
+      priority: values.priority,
+      status: values.status || "pending",
+      requestDate: values.requestDate.toISOString(),
+      dueDate: values.dueDate ? values.dueDate.toISOString() : undefined,
+      requiredQty: values.requiredQty,
+      aquiredQty: values.aquiredQty || 0,
+      moreDetails: values.moreDetails || "",
+      serviceId: values.serviceId || "",
+      donorId: values.donorId || ""
+    };
 
-    // Mettre à jour l'état local avec la nouvelle requête
+    // Add the new request to the state using the properly formatted object
     setRequests((prev) => {
       const updatedRequests = [newRequest, ...prev];
       return updatedRequests.sort(

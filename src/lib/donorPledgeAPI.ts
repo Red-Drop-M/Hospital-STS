@@ -1,6 +1,6 @@
 import { DonorPledgeDTO } from "@/components/DonorPledges/Columns";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.245:5000/';
+const API_URL = 'https://localhost:57677';
 
 // Types pour les réponses API
 type ApiResponse<T> = {
@@ -28,7 +28,7 @@ export async function getAllDonorPledges(params?: {
     }
 
     // Fix the URL to match your actual endpoint
-    const response = await fetch(`http://192.168.1.245:5000/donors-pledges?${queryParams}`);
+    const response = await fetch(`${API_URL}/donors-pledges?${queryParams}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch donor pledges');
@@ -70,7 +70,7 @@ export async function updateDonorPledge(
   data: Partial<Omit<DonorPledgeDTO, 'id'>>
 ): Promise<ApiResponse<DonorPledgeDTO>> {
   try {
-    const response = await fetch(`http://192.168.1.245:5000/donor-pledges/${id}`, {
+    const response = await fetch(`${API_URL}/donor-pledges/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

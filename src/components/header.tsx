@@ -32,10 +32,10 @@ export default function Header() {
                 
                 if (userData.success && userData.isAuthenticated) {
                     setUser({
-                        id: userData.id,
-                        name: userData.name,
-                        email: userData.email,
-                        role: userData.role
+                        id: userData.id || "",
+                        name: userData.name || "",
+                        email: userData.email || "",
+                        role: userData.role || ""
                     });
                     
                     // Ajouter les logs demandés pour afficher l'utilisateur et son rôle
@@ -87,17 +87,40 @@ export default function Header() {
             const response = await logoutUser();
             console.log('Logout response:', response);
             
-            // Nettoyer l'état local
+            // Clear BOTH cookies for middleware
+            document.cookie = "isLoggedIn=false; path=/; max-age=0";
+            document.cookie = "isAdminLoggedIn=false; path=/; max-age=0";
+            
+            // Clean up local state
             setUser(null);
             setIsAuthenticated(false);
             
-            // Rediriger vers la page de login
+            // Redirect to login page
             router.push('/');
         } catch (error) {
             console.error('Logout failed:', error);
-            router.push('/');
         }
     };
+
+    // Debug admin status to help troubleshoot
+    useEffect(() => {
+        const checkAdminStatus = () => {
+            const cookies = document.cookie.split(';');
+            const adminCookie = cookies.find(cookie => cookie.trim().startsWith('isAdminLoggedIn='));
+            const isAdminCookie = adminCookie && adminCookie.split('=')[1] === 'true';
+            const isAdminStorage = localStorage.getItem('isAdminLoggedIn') === 'true';
+            
+            console.log('ADMIN STATUS CHECK:', {
+                cookieExists: !!adminCookie,
+                cookieValue: adminCookie?.split('=')[1],
+                isAdminCookie,
+                isAdminStorage,
+                allCookies: document.cookie
+            });
+        };
+        
+        checkAdminStatus();
+    }, [pathname]); // Check on every route change
 
     return (
         <>

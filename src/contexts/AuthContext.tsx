@@ -8,7 +8,7 @@ import { AuthUser, GetCurrentUserResponse } from '@/types/auth';
 
 interface AuthContextType {
   user: AuthUser | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<any>; // Changed to match implementation
   logout: () => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -61,14 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(response.user);
         setIsAuthenticated(true);
         
-        // Redirect based on user role
-        if (response.user.role === 'Admin') {
-          router.push('/overview');
-        } else {
-          router.push('/overview');
-        }
-        
-        return;
+        // Don't redirect here - let the Login page component handle it
+        return response;
       } else {
         throw new Error('Login failed');
       }

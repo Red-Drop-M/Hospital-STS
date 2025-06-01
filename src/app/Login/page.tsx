@@ -31,14 +31,25 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // Call login API
       const response = await loginUser(email, password);
 
-      toast({
-        title: "Connexion réussie",
-        description: "Vous êtes maintenant connecté",
+      // Make sure cookies are set properly
+      // (should already be set in loginUser, this is for redundancy)
+      document.cookie = "isLoggedIn=true; path=/; max-age=86400";
+
+      if (email === "admin@hsts.com" && password === "Admin123!") {
+        document.cookie = "isAdminLoggedIn=true; path=/; max-age=86400";
+        console.log("Admin cookies verified:", document.cookie);
+      }
+
+      // Log to verify
+      console.log("Auth status after login:", {
+        isLoggedIn: document.cookie.includes("isLoggedIn=true"),
+        isAdmin: document.cookie.includes("isAdminLoggedIn=true"),
       });
 
-      // Add explicit redirection
+      // Redirect to overview
       router.push("/overview");
     } catch (error) {
       console.error("Login error:", error);

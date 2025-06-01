@@ -1,6 +1,6 @@
 import { UserDTO } from '@/app/users/Columns';
 
-const API_URL = 'http://192.168.1.245:5000';
+const API_URL = 'https://localhost:57677';
 
 type ApiResponse<T> = {
   data?: T;
@@ -163,7 +163,7 @@ export async function updateUser(id: string, data: {
     
     // Préparer les données pour le backend
     const updateData: any = {
-      Id: id,
+      id: id,
       Name: `${data.FirstName} ${data.LastName}`,
       Email: data.Email,
       Role: data.Role

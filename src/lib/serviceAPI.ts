@@ -1,7 +1,7 @@
 // src/lib/serviceAPI.ts
 import { ServiceDTO } from '../types/service';
 
-const API_URL = 'http://192.168.1.245:5000';
+const API_URL = 'https://localhost:57677';
 
 // Types pour les réponses API
 type ApiResponse<T> = {

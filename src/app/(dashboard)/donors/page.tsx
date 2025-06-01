@@ -227,10 +227,8 @@ const defaultValues = {
           id: donor.id || "",
           Name: donor.name || "",
           Email: donor.email || "",
-          // Fix here: Check if bloodType is an object and extract the value property
-          BloodType: typeof donor.bloodType === 'object' && donor.bloodType?.value 
-    ? donor.bloodType.value 
-    : donor.bloodType || "Unknown",
+          // Handle the nested bloodType object structure
+          BloodType: donor.bloodType?.value || donor.bloodType || "Unknown",
           Address: donor.address || "",
           NIN: donor.nin || "",
           PhoneNumber: donor.phoneNumber || "",
@@ -343,6 +341,7 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
   if (!selectedDonor) return;
   console.log("Updating donor with ID:", selectedDonor.id);
   try {
+    // Create the formatted values with the exact structure the API expects
     const formattedValues = {
       name: values.Name,
       email: values.Email,
@@ -359,10 +358,29 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
       notesBTC: values.NotesBTC || ""
     };
 
+    console.log("Formatted values for update:", formattedValues);
+    
     const response = await updateDonor(selectedDonor.id, formattedValues);
 
     if (response.success) {
-      // Fix here - use PascalCase property names that match your component
+      console.log("Donor updated successfully:", {
+        id: selectedDonor.id,
+        before: selectedDonor,
+        after: {
+          ...selectedDonor,
+          Name: values.Name,
+          Email: values.Email,
+          BloodType: values.BloodType,
+          Address: values.Address,
+          NIN: values.NIN,
+          PhoneNumber: values.PhoneNumber,
+          DateOfBirth: formattedValues.dateOfBirth ?? selectedDonor.DateOfBirth, // Fixed: use selectedDonor
+          LastDonationDate: formattedValues.lastDonationDate ?? selectedDonor.LastDonationDate, // Fixed: use selectedDonor
+          NotesBTC: values.NotesBTC || ""
+        },
+        apiResponse: response
+      });
+      // Rest of the function remains the same
       setDonors((prev) =>
         prev.map((donor) =>
           donor.id === selectedDonor.id
@@ -386,25 +404,6 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
         )
       );
       
-      // Add detailed logging of the update
-      console.log("Donor updated successfully:", {
-        id: selectedDonor.id,
-        before: selectedDonor,
-        after: {
-          ...selectedDonor,
-          Name: values.Name,
-          Email: values.Email,
-          BloodType: values.BloodType,
-          Address: values.Address,
-          NIN: values.NIN,
-          PhoneNumber: values.PhoneNumber,
-          DateOfBirth: formattedValues.dateOfBirth ?? donor.dateOfBirth,
-          LastDonationDate: formattedValues.lastDonationDate ?? donor.lastDonationDate,
-          NotesBTC: values.NotesBTC || ""
-        },
-        apiResponse: response
-      });
-      
       toast({
         title: "Success",
         description: "Donor updated successfully",
@@ -414,7 +413,7 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
     } else {
       toast({
         title: "Error",
-        description: "Failed to update donor",
+        description: response.Error || "Failed to update donor",
         variant: "destructive",
       });
     }
@@ -560,12 +559,12 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard 
+        {/* <StatCard 
           title="Total Donors"
           icon={Droplet}
           value={totalDonors.toString()}
           change="+12% from last month" 
-        />
+        /> */}
         {/* <StatCard 
           title="Active Donors"
           icon={Droplet}
@@ -578,12 +577,12 @@ const handleUpdate = async (values: z.infer<typeof createDonorSchema>) => {
           value={donors.filter(d => !d.regulier).length.toString()}
           change="+7% from last month" 
         /> */}
-        <StatCard 
+        {/* <StatCard 
           title="Avg. Donations"
           icon={Droplet}
           value="2.4"
           change="+0.3 from last month" 
-        />
+        /> */}
       </div>
 
       <Card className="mt-3 hover:border-red-900 transition-colors duration-300">

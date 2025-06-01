@@ -32,7 +32,14 @@ export default function ProtectedRoute({
           return;
         }
 
-        // Vérifier le rôle si nécessaire
+        // SPECIAL CASE: Admin users can access any route
+        if (user?.role === 'Admin') {
+          console.log("Admin user detected, allowing access to all routes");
+          setIsChecking(false);
+          return;
+        }
+
+        // Vérifier le rôle si nécessaire (only for non-admin users)
         if (requiredRole && user?.role !== requiredRole) {
           console.log(`Rôle requis: ${requiredRole}, rôle utilisateur: ${user?.role}`);
           router.push('/overview');
@@ -62,6 +69,11 @@ export default function ProtectedRoute({
   // Ne pas afficher le contenu si l'utilisateur n'est pas authentifié
   if (!isAuthenticated) {
     return null;
+  }
+
+  // SPECIAL CASE: Always allow admin users to access any route
+  if (user?.role === 'Admin') {
+    return <>{children}</>;
   }
 
   // Ne pas afficher le contenu si l'utilisateur n'a pas le rôle requis

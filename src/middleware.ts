@@ -1,79 +1,54 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Routes qui ne nécessitent pas d'authentification
+// Routes that don't require authentication
 const publicRoutes = ['/', '/login', '/register']
 
-// Routes réservées aux administrateurs
+// Admin routes
 const adminRoutes = ['/admins', '/services', '/users']
 
 export async function middleware(request: NextRequest) {
-  const authToken = request.cookies.get('auth_token')
   const { pathname } = request.nextUrl
-
+  
   console.log("Middleware - URL:", pathname);
-  console.log("Middleware - Auth Token:", authToken ? "Présent" : "Absent");
 
-  // Permettre l'accès aux routes publiques sans authentification
+  // Allow access to public routes without authentication
   if (publicRoutes.includes(pathname) || pathname.startsWith('/_next') || pathname.includes('.')) {
-    console.log("Middleware - Route publique, accès autorisé");
+    console.log("Middleware - Public route, access allowed");
     return NextResponse.next()
   }
 
-  // Rediriger vers la page de connexion si non authentifié
-  if (!authToken) {
-    console.log("Middleware - Aucun token, redirection vers login");
-    const loginUrl = new URL('/', request.url)
-    loginUrl.searchParams.set('from', pathname)
-    return NextResponse.redirect(loginUrl)
+  // Check for both regular login and admin status
+  const isLoggedIn = request.cookies.get('isLoggedIn')?.value === 'true'
+  const isAdmin = request.cookies.get('isAdminLoggedIn')?.value === 'true'
+  
+  console.log("Middleware - Is logged in:", isLoggedIn ? "Yes" : "No");
+  console.log("Middleware - Is admin:", isAdmin ? "Yes" : "No");
+
+  // Redirect to login page if not authenticated
+  if (!isLoggedIn && !isAdmin) {
+    console.log("Middleware - Not logged in, redirecting to login");
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // Vérifier les routes réservées aux administrateurs
-  if (adminRoutes.some(route => pathname.startsWith(route))) {
-    console.log("Middleware - Route admin détectée:", pathname);
-    
-    try {
-      // Option 1: Utiliser l'API locale de Next.js comme proxy
-      // Cela évite les problèmes CORS et de doubles lectures dans l'environnement Edge
-      const apiResponse = await fetch(`${request.nextUrl.origin}/api/auth/me`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': `auth_token=${authToken.value}`
-        }
-      });
-      
-      console.log("Middleware - Statut réponse:", apiResponse.status);
-      
-      if (!apiResponse.ok) {
-        console.log("Middleware - Échec de la validation utilisateur");
-        throw new Error(`Échec de la validation: ${apiResponse.status}`);
-      }
-      
-      const userData = await apiResponse.json();
-      console.log("Middleware - Données utilisateur:", userData);
-      
-      // Vérifier si l'utilisateur est un administrateur
-      if (!userData.isAuthenticated || userData.role !== 'Admin') {
-        console.log("Middleware - L'utilisateur n'est pas admin, redirection vers overview");
-        return NextResponse.redirect(new URL('/overview', request.url));
-      }
-      
-      console.log("Middleware - Utilisateur admin confirmé, accès autorisé");
-    } catch (error) {
-      console.error('Erreur de vérification admin:', error);
-      
-      // En cas d'erreur, rediriger vers la page d'accueil protégée
-      return NextResponse.redirect(new URL('/overview', request.url));
-    }
+  // Admin can access all routes
+  if (isAdmin) {
+    console.log("Middleware - Admin access granted to:", pathname);
+    return NextResponse.next();
   }
 
-  // Permettre l'accès aux routes protégées si authentifié
-  console.log("Middleware - Accès autorisé");
+  // Non-admin users can't access admin routes
+  if (!isAdmin && adminRoutes.some(route => pathname.startsWith(route))) {
+    console.log("Middleware - Non-admin attempting to access admin route, redirecting");
+    return NextResponse.redirect(new URL('/overview', request.url));
+  }
+
+  // Allow access to standard routes if authenticated
+  console.log("Middleware - Access allowed");
   return NextResponse.next();
 }
 
-// Configurer les chemins à protéger
+// Configure paths to protect
 export const config = {
   matcher: [
     '/overview/:path*',
@@ -82,7 +57,6 @@ export const config = {
     '/stock/:path*',
     '/donorpledges/:path*',
     '/admins/:path*',
-    '/services/:path*',
     '/users/:path*',
   ],
 }
